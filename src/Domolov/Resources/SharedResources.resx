@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppName" xml:space="preserve"><value>Domolov</value></data>
+  <data name="HomeIntro" xml:space="preserve"><value>Hunt homes. Watch search URLs, track prices, get notified.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="NoWatches" xml:space="preserve"><value>No watches yet. Create one under</value></data>
+  <data name="NavHome" xml:space="preserve"><value>Home</value></data>
+  <data name="NavWatches" xml:space="preserve"><value>Watches</value></data>
+  <data name="NavResults" xml:space="preserve"><value>Results</value></data>
+  <data name="NavBookmarks" xml:space="preserve"><value>Bookmarks</value></data>
+  <data name="NavScans" xml:space="preserve"><value>Scan history</value></data>
+  <data name="NavSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Login" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Password" xml:space="preserve"><value>Password</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Sign in</value></data>
+  <data name="LoginFailed" xml:space="preserve"><value>Invalid password.</value></data>
+  <data name="CreateWatch" xml:space="preserve"><value>Create watch</value></data>
+  <data name="Name" xml:space="preserve"><value>Name</value></data>
+  <data name="SearchUrl" xml:space="preserve"><value>Search URL</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="RunNow" xml:space="preserve"><value>Run now</value></data>
+  <data name="Baseline" xml:space="preserve"><value>Baseline done</value></data>
+  <data name="Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="No" xml:space="preserve"><value>No</value></data>
+  <data name="NotificationRoutes" xml:space="preserve"><value>Notification routes</value></data>
+  <data name="Destination" xml:space="preserve"><value>Destination</value></data>
+  <data name="AddRoute" xml:space="preserve"><value>Add route</value></data>
+  <data name="FilterWatch" xml:space="preserve"><value>Filter by watch</value></data>
+  <data name="AllWatches" xml:space="preserve"><value>All watches</value></data>
+  <data name="Bookmark" xml:space="preserve"><value>Bookmark</value></data>
+  <data name="Unbookmark" xml:space="preserve"><value>Remove bookmark</value></data>
+  <data name="OpenOriginal" xml:space="preserve"><value>Open listing</value></data>
+  <data name="Listing" xml:space="preserve"><value>Listing</value></data>
+  <data name="PriceHistory" xml:space="preserve"><value>Price history</value></data>
+  <data name="NoBookmarks" xml:space="preserve"><value>No bookmarks yet.</value></data>
+  <data name="Watch" xml:space="preserve"><value>Watch</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="QueuedAt" xml:space="preserve"><value>Queued</value></data>
+  <data name="New" xml:space="preserve"><value>New</value></data>
+  <data name="PriceChanges" xml:space="preserve"><value>Price changes</value></data>
+  <data name="Error" xml:space="preserve"><value>Error</value></data>
+  <data name="TimeZone" xml:space="preserve"><value>Time zone</value></data>
+  <data name="MaxConcurrentScans" xml:space="preserve"><value>Max concurrent scans</value></data>
+  <data name="BrowserHeadless" xml:space="preserve"><value>Browser headless</value></data>
+  <data name="Role" xml:space="preserve"><value>Role</value></data>
+  <data name="Configured" xml:space="preserve"><value>Configured</value></data>
+  <data name="NotConfigured" xml:space="preserve"><value>Not configured</value></data>
+  <data name="Language" xml:space="preserve"><value>Language</value></data>
+  <data name="LastScan" xml:space="preserve"><value>Last scan</value></data>
+  <data name="Logout" xml:space="preserve"><value>Sign out</value></data>
+</root>

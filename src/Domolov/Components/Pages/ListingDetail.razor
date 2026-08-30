@@ -1,0 +1,58 @@
+@page "/listings/{Id:guid}"
+@rendermode InteractiveServer
+@using Domolov.Application.Contracts
+@using Domolov.Application.Services
+@inject IListingQueryService Listings
+@inject IJSRuntime Js
+@inject IStringLocalizer<SharedResources> L
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@(_detail?.Title ?? L["Listing"])</PageTitle>
+
+@if (_detail is null)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    <h1>@_detail.Title</h1>
+    @if (!string.IsNullOrEmpty(_detail.ImageUrl))
+    {
+        <img src="@_detail.ImageUrl" alt="" style="max-width:480px;height:auto" />
+    }
+    <p>@_detail.Description</p>
+    <p><a href="@_detail.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a></p>
+    <button class="btn btn-outline-secondary" @onclick="ToggleBookmarkAsync">
+        @(_detail.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
+    </button>
+
+    <h2 class="mt-4">@L["PriceHistory"]</h2>
+    <canvas id="priceChart" width="600" height="280"></canvas>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private ListingDetailResponse? _detail;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _detail = await Listings.GetDetailAsync(Id);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _detail is not null && _detail.Prices.Count > 0)
+        {
+            var labels = _detail.Prices.Select(p => p.ObservedAt.ToString("u")).ToArray();
+            var values = _detail.Prices.Select(p => (double)p.Amount).ToArray();
+            await Js.InvokeVoidAsync("domolov.renderPriceChart", "priceChart", labels, values);
+        }
+    }
+
+    private async Task ToggleBookmarkAsync()
+    {
+        if (_detail is null) return;
+        await Listings.SetBookmarkAsync(_detail.Id, !_detail.IsBookmarked);
+        _detail = await Listings.GetDetailAsync(Id);
+    }
+}

@@ -1,0 +1,40 @@
+@page "/bookmarks"
+@rendermode InteractiveServer
+@using Domolov.Application.Services
+@inject IListingQueryService Listings
+@inject IStringLocalizer<SharedResources> L
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@L["NavBookmarks"]</PageTitle>
+
+<h1>@L["NavBookmarks"]</h1>
+
+@if (_items is null)
+{
+    <p>@L["Loading"]</p>
+}
+else if (_items.Count == 0)
+{
+    <p>@L["NoBookmarks"]</p>
+}
+else
+{
+    <ul>
+        @foreach (var item in _items)
+        {
+            <li>
+                <a href="listings/@item.Id">@item.Title</a>
+                — @item.LatestPrice @item.Currency
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<Domolov.Application.Contracts.ListingResponse>? _items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await Listings.GetForWatchAsync(null, true);
+    }
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Domolov.Application/Domolov.Application.csproj" />
+    <Project Path="src/Domolov.Domain/Domolov.Domain.csproj" />
+    <Project Path="src/Domolov.Infrastructure/Domolov.Infrastructure.csproj" />
+    <Project Path="src/Domolov/Domolov.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Domolov.E2ETests/Domolov.E2ETests.csproj" />
+    <Project Path="tests/Domolov.IntegrationTests/Domolov.IntegrationTests.csproj" />
+    <Project Path="tests/Domolov.UnitTests/Domolov.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,36 @@
+﻿@using Domolov
+@inject IStringLocalizer<SharedResources> L
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">@L["AppName"]</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">@L["NavHome"]</NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="watches">@L["NavWatches"]</NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="results">@L["NavResults"]</NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="bookmarks">@L["NavBookmarks"]</NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="scans">@L["NavScans"]</NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="settings">@L["NavSettings"]</NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="login">@L["Login"]</NavLink>
+        </div>
+    </nav>
+</div>

@@ -1,0 +1,52 @@
+@page "/scans"
+@using Domolov.Application.Services
+@inject IScanRunQueryService ScanQuery
+@inject IStringLocalizer<SharedResources> L
+@attribute [StreamRendering]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@L["NavScans"]</PageTitle>
+
+<h1>@L["NavScans"]</h1>
+
+@if (_runs is null)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@L["Watch"]</th>
+                <th>@L["Status"]</th>
+                <th>@L["QueuedAt"]</th>
+                <th>@L["New"]</th>
+                <th>@L["PriceChanges"]</th>
+                <th>@L["Error"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in _runs)
+            {
+                <tr>
+                    <td>@r.WatchName</td>
+                    <td>@r.Status</td>
+                    <td>@r.QueuedAt</td>
+                    <td>@r.NewCount</td>
+                    <td>@r.PriceChangeCount</td>
+                    <td>@(r.ErrorSummary ?? r.NotifyErrorSummary)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<Domolov.Application.Contracts.ScanRunResponse>? _runs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _runs = await ScanQuery.GetRecentAsync();
+    }
+}

@@ -1,0 +1,64 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Domolov.Application.Abstractions
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.Options
+@using System.Security.Claims
+@inject IOptions<DomolovOptions> Options
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@L["Login"]</PageTitle>
+
+<h1>@L["Login"]</h1>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <p class="text-danger">@_error</p>
+}
+
+<EditForm Model="_model" OnValidSubmit="LoginAsync">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label class="form-label">@L["Password"]</label>
+        <InputText type="password" class="form-control" @bind-Value="_model.Password" />
+    </div>
+    <button class="btn btn-primary" type="submit">@L["SignIn"]</button>
+</EditForm>
+
+@code {
+    private readonly LoginModel _model = new();
+    private string? _error;
+
+    private async Task LoginAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            _error = L["LoginFailed"];
+            return;
+        }
+
+        if (_model.Password != Options.Value.AdminPassword)
+        {
+            _error = L["LoginFailed"];
+            return;
+        }
+
+        var identity = new ClaimsIdentity(
+            [new Claim(ClaimTypes.Name, "admin")],
+            CookieAuthenticationDefaults.AuthenticationScheme);
+        await http.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity));
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+
+    private sealed class LoginModel
+    {
+        [Required]
+        public string Password { get; set; } = "";
+    }
+}

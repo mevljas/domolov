@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: domolov
+      POSTGRES_USER: domolov
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-domolov}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U domolov -d domolov"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  domolov:
+    image: ghcr.io/mevljas/domolov:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=domolov;Username=domolov;Password=${POSTGRES_PASSWORD:-domolov}
+      DOMOLOV_ADMIN_PASSWORD: ${DOMOLOV_ADMIN_PASSWORD:-changeme}
+      DOMOLOV_TIMEZONE: ${DOMOLOV_TIMEZONE:-Europe/Ljubljana}
+      DOMOLOV_MAX_CONCURRENT_SCANS: ${DOMOLOV_MAX_CONCURRENT_SCANS:-2}
+      DOMOLOV_BROWSER_HEADLESS: ${DOMOLOV_BROWSER_HEADLESS:-false}
+      DOMOLOV_BROWSER_USER_DATA_DIR: /data/browser-profile
+      DOMOLOV_LOG_LEVEL: ${DOMOLOV_LOG_LEVEL:-Information}
+      DOMOLOV_ROLE: ${DOMOLOV_ROLE:-all}
+      DOMOLOV_TELEGRAM_BOT_TOKEN: ${DOMOLOV_TELEGRAM_BOT_TOKEN:-}
+      DOMOLOV_SMTP_HOST: ${DOMOLOV_SMTP_HOST:-}
+      DOMOLOV_SMTP_PORT: ${DOMOLOV_SMTP_PORT:-587}
+      DOMOLOV_SMTP_USER: ${DOMOLOV_SMTP_USER:-}
+      DOMOLOV_SMTP_PASSWORD: ${DOMOLOV_SMTP_PASSWORD:-}
+      DOMOLOV_SMTP_FROM: ${DOMOLOV_SMTP_FROM:-}
+      DOMOLOV_VAPID_PUBLIC_KEY: ${DOMOLOV_VAPID_PUBLIC_KEY:-}
+      DOMOLOV_VAPID_PRIVATE_KEY: ${DOMOLOV_VAPID_PRIVATE_KEY:-}
+      DOMOLOV_VAPID_SUBJECT: ${DOMOLOV_VAPID_SUBJECT:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    volumes:
+      - browser-profile:/data/browser-profile
+      - logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  browser-profile:
+  logs:

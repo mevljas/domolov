@@ -1,0 +1,122 @@
+@page "/watches"
+@rendermode InteractiveServer
+@using Domolov.Application.Abstractions
+@using Domolov.Application.Contracts
+@using Domolov.Application.Services
+@using Domolov.Domain.Enums
+@inject IWatchService WatchService
+@inject IScanOrchestrator Orchestrator
+@inject IStringLocalizer<SharedResources> L
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@L["NavWatches"]</PageTitle>
+
+<h1>@L["NavWatches"]</h1>
+
+<section class="mb-4">
+    <h2>@L["CreateWatch"]</h2>
+    <EditForm Model="_create" OnValidSubmit="CreateAsync">
+        <DataAnnotationsValidator />
+        <div class="mb-2">
+            <InputText class="form-control" @bind-Value="_create.Name" placeholder="@L["Name"]" />
+        </div>
+        <div class="mb-2">
+            <InputText class="form-control" @bind-Value="_create.SearchUrl" placeholder="@L["SearchUrl"]" />
+        </div>
+        <div class="mb-2">
+            <InputText class="form-control" @bind-Value="_create.Cron" placeholder="0 * * * *" />
+        </div>
+        <button class="btn btn-primary" type="submit">@L["Save"]</button>
+    </EditForm>
+</section>
+
+@if (_watches is null)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    @foreach (var w in _watches)
+    {
+        <article class="mb-4 border-bottom pb-3">
+            <h3>@w.Name</h3>
+            <p><a href="@w.SearchUrl" target="_blank" rel="noopener">@w.SearchUrl</a></p>
+            <p>Cron: @w.Cron | @L["Baseline"]: @(w.HasCompletedBaseline ? L["Yes"] : L["No"])</p>
+            <button class="btn btn-sm btn-secondary" @onclick="() => RunAsync(w.Id)">@L["RunNow"]</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(w.Id)">@L["Delete"]</button>
+
+            <h4 class="mt-3">@L["NotificationRoutes"]</h4>
+            <ul>
+                @foreach (var r in w.Routes)
+                {
+                    <li>
+                        @r.Channel → @r.Destination (@r.Triggers)
+                        <button class="btn btn-link btn-sm" @onclick="() => DeleteRouteAsync(w.Id, r.Id)">@L["Delete"]</button>
+                    </li>
+                }
+            </ul>
+            <div class="d-flex gap-2 flex-wrap">
+                <InputSelect @bind-Value="_route.Channel" class="form-select" style="max-width:10rem">
+                    @foreach (var c in Enum.GetValues<NotificationChannel>())
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </InputSelect>
+                <InputText class="form-control" @bind-Value="_route.Destination" placeholder="@L["Destination"]" />
+                <button class="btn btn-outline-primary" type="button" @onclick="() => AddRouteAsync(w.Id)">@L["AddRoute"]</button>
+            </div>
+        </article>
+    }
+}
+
+@code {
+    private IReadOnlyList<WatchResponse>? _watches;
+    private CreateWatchRequest _create = new() { Name = "", SearchUrl = "https://www.nepremicnine.net/" };
+    private RouteForm _route = new();
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync() => _watches = await WatchService.GetAllAsync();
+
+    private async Task CreateAsync()
+    {
+        await WatchService.CreateAsync(_create);
+        _create = new() { Name = "", SearchUrl = "https://www.nepremicnine.net/" };
+        await ReloadAsync();
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        await WatchService.DeleteAsync(id);
+        await ReloadAsync();
+    }
+
+    private async Task RunAsync(Guid id)
+    {
+        await Orchestrator.EnqueueAsync(id);
+    }
+
+    private async Task AddRouteAsync(Guid watchId)
+    {
+        await WatchService.AddRouteAsync(watchId, new CreateNotificationRouteRequest
+        {
+            Channel = _route.Channel,
+            Destination = _route.Destination,
+            Triggers = NotificationTrigger.NewListing | NotificationTrigger.PriceDecreased,
+        });
+        _route = new();
+        await ReloadAsync();
+    }
+
+    private async Task DeleteRouteAsync(Guid watchId, Guid routeId)
+    {
+        await WatchService.DeleteRouteAsync(watchId, routeId);
+        await ReloadAsync();
+    }
+
+    private sealed class RouteForm
+    {
+        public NotificationChannel Channel { get; set; } = NotificationChannel.Discord;
+        public string Destination { get; set; } = "";
+    }
+}

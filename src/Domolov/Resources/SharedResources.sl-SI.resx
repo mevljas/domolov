@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppName" xml:space="preserve"><value>Domolov</value></data>
+  <data name="HomeIntro" xml:space="preserve"><value>Lov na dom. Spremljaj iskalne URL-je, cene in prejemaj obvestila.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Nalaganje…</value></data>
+  <data name="NoWatches" xml:space="preserve"><value>Še ni nobenega iskanja. Ustvari ga pod</value></data>
+  <data name="NavHome" xml:space="preserve"><value>Domov</value></data>
+  <data name="NavWatches" xml:space="preserve"><value>Iskanja</value></data>
+  <data name="NavResults" xml:space="preserve"><value>Rezultati</value></data>
+  <data name="NavBookmarks" xml:space="preserve"><value>Zaznamki</value></data>
+  <data name="NavScans" xml:space="preserve"><value>Zgodovina skenov</value></data>
+  <data name="NavSettings" xml:space="preserve"><value>Nastavitve</value></data>
+  <data name="Login" xml:space="preserve"><value>Prijava</value></data>
+  <data name="Password" xml:space="preserve"><value>Geslo</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Prijava</value></data>
+  <data name="LoginFailed" xml:space="preserve"><value>Napačno geslo.</value></data>
+  <data name="CreateWatch" xml:space="preserve"><value>Novo iskanje</value></data>
+  <data name="Name" xml:space="preserve"><value>Ime</value></data>
+  <data name="SearchUrl" xml:space="preserve"><value>URL iskanja</value></data>
+  <data name="Save" xml:space="preserve"><value>Shrani</value></data>
+  <data name="Delete" xml:space="preserve"><value>Izbriši</value></data>
+  <data name="RunNow" xml:space="preserve"><value>Zaženi zdaj</value></data>
+  <data name="Baseline" xml:space="preserve"><value>Izhodišče</value></data>
+  <data name="Yes" xml:space="preserve"><value>Da</value></data>
+  <data name="No" xml:space="preserve"><value>Ne</value></data>
+  <data name="NotificationRoutes" xml:space="preserve"><value>Poti obvestil</value></data>
+  <data name="Destination" xml:space="preserve"><value>Cilj</value></data>
+  <data name="AddRoute" xml:space="preserve"><value>Dodaj pot</value></data>
+  <data name="FilterWatch" xml:space="preserve"><value>Filtriraj po iskanju</value></data>
+  <data name="AllWatches" xml:space="preserve"><value>Vsa iskanja</value></data>
+  <data name="Bookmark" xml:space="preserve"><value>Zaznamek</value></data>
+  <data name="Unbookmark" xml:space="preserve"><value>Odstrani zaznamek</value></data>
+  <data name="OpenOriginal" xml:space="preserve"><value>Odpri oglas</value></data>
+  <data name="Listing" xml:space="preserve"><value>Oglas</value></data>
+  <data name="PriceHistory" xml:space="preserve"><value>Zgodovina cen</value></data>
+  <data name="NoBookmarks" xml:space="preserve"><value>Še ni zaznamkov.</value></data>
+  <data name="Watch" xml:space="preserve"><value>Iskanje</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="QueuedAt" xml:space="preserve"><value>V čakalni vrsti</value></data>
+  <data name="New" xml:space="preserve"><value>Novo</value></data>
+  <data name="PriceChanges" xml:space="preserve"><value>Spremembe cen</value></data>
+  <data name="Error" xml:space="preserve"><value>Napaka</value></data>
+  <data name="TimeZone" xml:space="preserve"><value>Časovni pas</value></data>
+  <data name="MaxConcurrentScans" xml:space="preserve"><value>Največ sočasnih skenov</value></data>
+  <data name="BrowserHeadless" xml:space="preserve"><value>Brezglavi brskalnik</value></data>
+  <data name="Role" xml:space="preserve"><value>Vloga</value></data>
+  <data name="Configured" xml:space="preserve"><value>Nastavljeno</value></data>
+  <data name="NotConfigured" xml:space="preserve"><value>Ni nastavljeno</value></data>
+  <data name="Language" xml:space="preserve"><value>Jezik</value></data>
+  <data name="LastScan" xml:space="preserve"><value>Zadnji sken</value></data>
+  <data name="Logout" xml:space="preserve"><value>Odjava</value></data>
+</root>

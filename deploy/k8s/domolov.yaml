@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: domolov
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: domolov-config
+  namespace: domolov
+data:
+  DOMOLOV_TIMEZONE: Europe/Ljubljana
+  DOMOLOV_MAX_CONCURRENT_SCANS: "2"
+  DOMOLOV_BROWSER_HEADLESS: "false"
+  DOMOLOV_BROWSER_USER_DATA_DIR: /data/browser-profile
+  DOMOLOV_LOG_LEVEL: Information
+  DOMOLOV_ROLE: all
+  ASPNETCORE_URLS: http://+:8080
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: domolov-secrets
+  namespace: domolov
+type: Opaque
+stringData:
+  DOMOLOV_ADMIN_PASSWORD: changeme
+  ConnectionStrings__Default: Host=postgres;Port=5432;Database=domolov;Username=domolov;Password=domolov
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: domolov-browser-profile
+  namespace: domolov
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: domolov
+  namespace: domolov
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: domolov
+  template:
+    metadata:
+      labels:
+        app: domolov
+    spec:
+      containers:
+        - name: domolov
+          image: ghcr.io/mevljas/domolov:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: domolov-config
+            - secretRef:
+                name: domolov-secrets
+          volumeMounts:
+            - name: browser-profile
+              mountPath: /data/browser-profile
+          resources:
+            requests:
+              cpu: "250m"
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: browser-profile
+          persistentVolumeClaim:
+            claimName: domolov-browser-profile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: domolov
+  namespace: domolov
+spec:
+  selector:
+    app: domolov
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domolov
+  namespace: domolov
+  annotations:
+    # Configure TLS at your ingress controller (cert-manager, etc.)
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+    - host: domolov.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: domolov
+                port:
+                  number: 80

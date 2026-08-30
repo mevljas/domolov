@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:5080
+
+### Health
+GET {{baseUrl}}/healthz
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "password": "changeme"
+}
+
+### List watches
+GET {{baseUrl}}/api/watches
+
+### Create watch
+POST {{baseUrl}}/api/watches
+Content-Type: application/json
+
+{
+  "name": "Ljubljana apartments",
+  "searchUrl": "https://www.nepremicnine.net/oglasi-prodaja/ljubljana/stanovanje/",
+  "cron": "0 * * * *",
+  "isEnabled": true
+}
+
+### Settings
+GET {{baseUrl}}/api/settings
+
+### Listings
+GET {{baseUrl}}/api/listings
+
+### Scans
+GET {{baseUrl}}/api/scans

@@ -1,0 +1,77 @@
+@page "/results"
+@rendermode InteractiveServer
+@using Domolov.Application.Contracts
+@using Domolov.Application.Services
+@inject IListingQueryService Listings
+@inject IWatchService Watches
+@inject IStringLocalizer<SharedResources> L
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@L["NavResults"]</PageTitle>
+
+<h1>@L["NavResults"]</h1>
+
+<div class="mb-3">
+    <label>@L["FilterWatch"]</label>
+    <select class="form-select" @bind="_watchIdText" @bind:after="ReloadAsync">
+        <option value="">@L["AllWatches"]</option>
+        @if (_watches is not null)
+        {
+            @foreach (var w in _watches)
+            {
+                <option value="@w.Id">@w.Name</option>
+            }
+        }
+    </select>
+</div>
+
+@if (_items is null)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var item in _items)
+        {
+            <div class="col-md-6">
+                <article>
+                    <h3><a href="listings/@item.Id">@item.Title</a></h3>
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl" alt="" style="max-width:100%;height:auto" />
+                    }
+                    <p>@item.LatestPrice @item.Currency</p>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleBookmarkAsync(item)">
+                        @(item.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
+                    </button>
+                    <a class="btn btn-sm btn-link" href="@item.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a>
+                </article>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ListingResponse>? _items;
+    private IReadOnlyList<WatchResponse>? _watches;
+    private string _watchIdText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _watches = await Watches.GetAllAsync();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        Guid? watchId = Guid.TryParse(_watchIdText, out var id) ? id : null;
+        _items = await Listings.GetForWatchAsync(watchId, false);
+    }
+
+    private async Task ToggleBookmarkAsync(ListingResponse item)
+    {
+        await Listings.SetBookmarkAsync(item.Id, !item.IsBookmarked);
+        await ReloadAsync();
+    }
+}

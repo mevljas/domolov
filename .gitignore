@@ -1,0 +1,47 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.DotSettings.user
+
+## Local SDK
+.dotnet/
+global.json.bak
+
+## Secrets / local
+.env
+*.pfx
+appsettings.*.local.json
+
+## Test / coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.cursor/
+
+## Playwright
+playwright/.cache/
+**/playwright-report/
+**/test-results/
+
+## Logs
+logs/
+*.log
+
+## Docker volumes (local)
+data/
+browser-profile/

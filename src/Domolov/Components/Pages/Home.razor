@@ -1,0 +1,44 @@
+﻿@page "/"
+@using Domolov.Application.Services
+@inject IWatchService Watches
+@inject IStringLocalizer<SharedResources> L
+@attribute [StreamRendering]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@L["AppName"]</PageTitle>
+
+<h1>@L["AppName"]</h1>
+<p>@L["HomeIntro"]</p>
+
+@if (_watches is null)
+{
+    <p>@L["Loading"]</p>
+}
+else if (_watches.Count == 0)
+{
+    <p>@L["NoWatches"] <a href="watches">@L["NavWatches"]</a></p>
+}
+else
+{
+    <ul>
+        @foreach (var w in _watches)
+        {
+            <li>
+                <strong>@w.Name</strong> — @w.SearchUrl
+                @if (w.LastScannedAt is not null)
+                {
+                    <span> (@L["LastScan"]: @w.LastScannedAt)</span>
+                }
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private IReadOnlyList<Domolov.Application.Contracts.WatchResponse>? _watches;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _watches = await Watches.GetAllAsync();
+    }
+}
