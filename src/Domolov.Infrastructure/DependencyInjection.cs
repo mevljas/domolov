@@ -63,7 +63,9 @@ public static class DependencyInjection
                 ?? configuration["Domolov:AdminPassword"]
                 ?? o.AdminPassword;
             o.TimeZone =
-                configuration["DOMOLOV_TIMEZONE"] ?? configuration["Domolov:TimeZone"] ?? o.TimeZone;
+                configuration["DOMOLOV_TIMEZONE"]
+                ?? configuration["Domolov:TimeZone"]
+                ?? o.TimeZone;
             if (
                 int.TryParse(
                     configuration["DOMOLOV_MAX_CONCURRENT_SCANS"]

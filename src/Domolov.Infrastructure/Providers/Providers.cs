@@ -101,8 +101,7 @@ public sealed class NepremicnineProvider(
 
     public async IAsyncEnumerable<ListingCard> CrawlAsync(
         CrawlRequest request,
-        [System.Runtime.CompilerServices.EnumeratorCancellation]
-            CancellationToken cancellationToken
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
         var context = await browserHost.GetContextAsync(cancellationToken);
@@ -117,11 +116,7 @@ public sealed class NepremicnineProvider(
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var url = NepremicnineParsing.BuildPageUrl(request.SearchUrl, pageIndex);
-                logger.LogInformation(
-                    "Crawling {Url} (scan {ScanId})",
-                    url,
-                    request.ScanRunId
-                );
+                logger.LogInformation("Crawling {Url} (scan {ScanId})", url, request.ScanRunId);
 
                 var response = await page.GotoAsync(
                     url.ToString(),
@@ -271,8 +266,7 @@ public sealed class NepremicnineProvider(
         var img = card.Locator("img").First;
         if (await img.CountAsync() > 0)
         {
-            image =
-                await img.GetAttributeAsync("data-src") ?? await img.GetAttributeAsync("src");
+            image = await img.GetAttributeAsync("data-src") ?? await img.GetAttributeAsync("src");
         }
 
         decimal? price = null;

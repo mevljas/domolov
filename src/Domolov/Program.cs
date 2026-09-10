@@ -79,9 +79,7 @@ var otel = builder
             .AddSource("Domolov.Scans")
             .AddSource("Domolov.Notifications")
     )
-    .WithMetrics(metrics =>
-        metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation()
-    );
+    .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation());
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
 {
@@ -185,8 +183,10 @@ api.MapPost(
 
 api.MapGet(
         "/watches",
-        async Task<Ok<IReadOnlyList<WatchResponse>>> (IWatchService watches, CancellationToken ct) =>
-            TypedResults.Ok(await watches.GetAllAsync(ct))
+        async Task<Ok<IReadOnlyList<WatchResponse>>> (
+            IWatchService watches,
+            CancellationToken ct
+        ) => TypedResults.Ok(await watches.GetAllAsync(ct))
     )
     .WithName("ListWatches");
 
@@ -239,8 +239,7 @@ api.MapDelete(
             Guid id,
             IWatchService watches,
             CancellationToken ct
-        ) =>
-            await watches.DeleteAsync(id, ct) ? TypedResults.NoContent() : TypedResults.NotFound()
+        ) => await watches.DeleteAsync(id, ct) ? TypedResults.NoContent() : TypedResults.NotFound()
     )
     .WithName("DeleteWatch");
 
@@ -371,7 +370,11 @@ api.MapPost(
 
 api.MapPost(
         "/push/subscribe",
-        async Task<NoContent> (PushSubscribeRequest request, IAppDbContext db, CancellationToken ct) =>
+        async Task<NoContent> (
+            PushSubscribeRequest request,
+            IAppDbContext db,
+            CancellationToken ct
+        ) =>
         {
             var existing = await db.PushSubscriptions.FirstOrDefaultAsync(
                 s => s.Endpoint == request.Endpoint,

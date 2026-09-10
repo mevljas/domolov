@@ -23,9 +23,8 @@ jobs:
         run: dotnet restore Domolov.slnx
       - name: Format check (csharpier)
         run: |
-          dotnet tool install -g csharpier --version 1.0.2
-          csharpier check .
-        continue-on-error: true
+          dotnet tool restore
+          dotnet csharpier check .
       - name: Build
         run: dotnet build Domolov.slnx -c Release --no-restore
       - name: Test with coverage
@@ -33,24 +32,30 @@ jobs:
           dotnet test Domolov.slnx -c Release --no-build
           --collect:"XPlat Code Coverage"
           --results-directory ./coverage
+          --settings coverlet.runsettings
       - name: Coverage gate (Domain + Application)
         run: |
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET, sys
+          from collections import defaultdict
           files = glob.glob("coverage/**/coverage.cobertura.xml", recursive=True)
           if not files:
               print("No coverage files"); sys.exit(1)
-          lines_valid = lines_covered = 0
+          # Merge hits across test projects (max hits per file/line) — summing
+          # Cobertura files double-counts the Domain+Application denominator.
+          hits = defaultdict(int)
           for f in files:
               root = ET.parse(f).getroot()
               for pkg in root.findall(".//package"):
                   name = pkg.attrib.get("name","")
                   if "Domolov.Domain" in name or "Domolov.Application" in name:
                       for cls in pkg.findall(".//class"):
+                          filename = cls.attrib.get("filename") or cls.attrib.get("name") or "?"
                           for line in cls.findall(".//line"):
-                              lines_valid += 1
-                              if int(line.attrib.get("hits","0")) > 0:
-                                  lines_covered += 1
+                              key = (filename, line.attrib.get("number"))
+                              hits[key] = max(hits[key], int(line.attrib.get("hits","0")))
+          lines_valid = len(hits)
+          lines_covered = sum(1 for h in hits.values() if h > 0)
           if lines_valid == 0:
               print("No domain/application lines found; skipping numeric gate")
               sys.exit(0)

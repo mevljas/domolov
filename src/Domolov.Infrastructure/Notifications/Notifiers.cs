@@ -49,11 +49,7 @@ public sealed class DiscordNotifier(HttpClient http, ILogger<DiscordNotifier> lo
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogWarning(
-                "Discord webhook failed: {Status} {Body}",
-                response.StatusCode,
-                body
-            );
+            logger.LogWarning("Discord webhook failed: {Status} {Body}", response.StatusCode, body);
             response.EnsureSuccessStatusCode();
         }
     }
@@ -63,7 +59,14 @@ public sealed class DiscordNotifier(HttpClient http, ILogger<DiscordNotifier> lo
         var fields = new List<object>();
         if (message.Price is decimal price)
         {
-            fields.Add(new { name = "Price", value = $"{price} EUR", inline = true });
+            fields.Add(
+                new
+                {
+                    name = "Price",
+                    value = $"{price} EUR",
+                    inline = true,
+                }
+            );
         }
 
         if (message.PreviousPrices is { Count: > 0 })
@@ -140,7 +143,9 @@ public sealed class TelegramNotifier(
     }
 
     private static string Escape(string value) =>
-        value.Replace("_", "\\_", StringComparison.Ordinal).Replace("*", "\\*", StringComparison.Ordinal);
+        value
+            .Replace("_", "\\_", StringComparison.Ordinal)
+            .Replace("*", "\\*", StringComparison.Ordinal);
 }
 
 /// <summary>SMTP email notifier.</summary>

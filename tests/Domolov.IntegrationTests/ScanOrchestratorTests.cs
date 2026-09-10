@@ -20,22 +20,24 @@ public sealed class ScanOrchestratorTests
     public async Task First_scan_is_baseline_without_notifications()
     {
         await using var root = BuildProvider(
-            new FakeListingProvider([
-                new ListingCard(
-                    "1",
-                    "https://example.com/1/",
-                    "A",
-                    100,
-                    "EUR",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-                ),
-            ])
+            new FakeListingProvider(
+                [
+                    new ListingCard(
+                        "1",
+                        "https://example.com/1/",
+                        "A",
+                        100,
+                        "EUR",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    ),
+                ]
+            )
         );
         await using var scope = root.CreateAsyncScope();
         var sp = scope.ServiceProvider;
@@ -141,6 +143,129 @@ public sealed class ScanOrchestratorTests
             .Be(ScanRunStatus.Succeeded);
     }
 
+    [Fact]
+    public async Task Duplicate_enqueue_returns_existing_run()
+    {
+        await using var root = BuildProvider(new FakeListingProvider([]));
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+        var watch = new Watch
+        {
+            Name = "t",
+            ProviderId = "fake",
+            SearchUrl = "https://example.com/search",
+            HasCompletedBaseline = true,
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        var first = await orchestrator.EnqueueAsync(watch.Id);
+        var second = await orchestrator.EnqueueAsync(watch.Id);
+        second.Should().Be(first);
+        (await db.ScanRuns.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Failed_crawl_marks_scan_failed()
+    {
+        await using var root = BuildProvider(new ThrowingListingProvider());
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+        var watch = new Watch
+        {
+            Name = "t",
+            ProviderId = "fake",
+            SearchUrl = "https://example.com/search",
+            HasCompletedBaseline = true,
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        var runId = await orchestrator.EnqueueAsync(watch.Id);
+        await orchestrator.ProcessQueuedAsync();
+
+        var run = await db.ScanRuns.AsNoTracking().SingleAsync(r => r.Id == runId);
+        run.Status.Should().Be(ScanRunStatus.Failed);
+        run.ErrorSummary.Should().Contain("cloudflare");
+    }
+
+    [Fact]
+    public async Task Price_decrease_and_increase_notify_matching_routes()
+    {
+        var cards = new List<ListingCard>
+        {
+            new(
+                "1",
+                "https://example.com/1/",
+                "A",
+                100,
+                "EUR",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            ),
+        };
+        await using var root = BuildProvider(new FakeListingProvider(cards));
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+        var watch = new Watch
+        {
+            Name = "t",
+            ProviderId = "fake",
+            SearchUrl = "https://example.com/search",
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        await orchestrator.EnqueueAsync(watch.Id);
+        await orchestrator.ProcessQueuedAsync();
+
+        var tracked = await db.Watches.SingleAsync();
+        db.NotificationRoutes.Add(
+            new NotificationRoute
+            {
+                WatchId = tracked.Id,
+                Channel = NotificationChannel.Discord,
+                Destination = "https://discord.test/webhook",
+                Triggers = NotificationTrigger.PriceDecreased | NotificationTrigger.PriceIncreased,
+            }
+        );
+        await db.SaveChangesAsync();
+
+        cards[0] = cards[0] with { Price = 80 };
+        FakeNotifier.Sent.Clear();
+        await orchestrator.EnqueueAsync(tracked.Id);
+        await orchestrator.ProcessQueuedAsync();
+        FakeNotifier.Sent.Should().ContainSingle(m => m.Body.Contains("decreased"));
+
+        cards[0] = cards[0] with { Price = 120 };
+        FakeNotifier.Sent.Clear();
+        await orchestrator.EnqueueAsync(tracked.Id);
+        await orchestrator.ProcessQueuedAsync();
+        FakeNotifier.Sent.Should().ContainSingle(m => m.Body.Contains("increased"));
+    }
+
+    [Fact]
+    public async Task Enqueue_missing_watch_throws()
+    {
+        await using var root = BuildProvider(new FakeListingProvider([]));
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+
+        var act = async () => await orchestrator.EnqueueAsync(Guid.NewGuid());
+        await act.Should().ThrowAsync<KeyNotFoundException>();
+    }
+
     private static ServiceProvider BuildProvider(IListingProvider listingProvider)
     {
         FakeNotifier.Sent.Clear();
@@ -182,6 +307,25 @@ public sealed class ScanOrchestratorTests
                 yield return card;
                 await Task.Yield();
             }
+        }
+    }
+
+    private sealed class ThrowingListingProvider : IListingProvider
+    {
+        public string Id => "fake";
+
+        public bool CanHandle(Uri searchUrl) => true;
+
+        public async IAsyncEnumerable<ListingCard> CrawlAsync(
+            CrawlRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken
+        )
+        {
+            await Task.Yield();
+            throw new CloudflareBlockedException("cloudflare challenge");
+#pragma warning disable CS0162
+            yield break;
+#pragma warning restore CS0162
         }
     }
 

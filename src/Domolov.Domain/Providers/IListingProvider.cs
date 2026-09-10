@@ -24,7 +24,10 @@ public interface IListingProvider
 {
     string Id { get; }
     bool CanHandle(Uri searchUrl);
-    IAsyncEnumerable<ListingCard> CrawlAsync(CrawlRequest request, CancellationToken cancellationToken);
+    IAsyncEnumerable<ListingCard> CrawlAsync(
+        CrawlRequest request,
+        CancellationToken cancellationToken
+    );
 }
 
 /// <summary>Raised when a Cloudflare (or similar) challenge page is detected.</summary>

@@ -54,9 +54,7 @@ public sealed class NepremicnineParsingTests
     [Fact]
     public void BuildPageUrl_appends_page_index()
     {
-        var baseUrl = new Uri(
-            "https://www.nepremicnine.net/oglasi-prodaja/ljubljana/stanovanje/"
-        );
+        var baseUrl = new Uri("https://www.nepremicnine.net/oglasi-prodaja/ljubljana/stanovanje/");
         NepremicnineParsing.BuildPageUrl(baseUrl, 1).Should().Be(baseUrl);
         NepremicnineParsing
             .BuildPageUrl(baseUrl, 2)
@@ -72,7 +70,10 @@ public sealed class NepremicnineParsingTests
             .LooksLikeCloudflareChallenge("<html>Just a moment...</html>")
             .Should()
             .BeTrue();
-        NepremicnineParsing.LooksLikeCloudflareChallenge("<html>ok listings</html>").Should().BeFalse();
+        NepremicnineParsing
+            .LooksLikeCloudflareChallenge("<html>ok listings</html>")
+            .Should()
+            .BeFalse();
     }
 
     [Fact]

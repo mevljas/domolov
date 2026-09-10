@@ -276,7 +276,9 @@ public sealed class ScanOrchestrator : IScanOrchestrator
         await db.SaveChangesAsync(cancellationToken);
 
         var notifyErrors = new List<string>();
-        var notifierMap = notifiers.GroupBy(n => n.Channel).ToDictionary(g => g.Key, g => g.First());
+        var notifierMap = notifiers
+            .GroupBy(n => n.Channel)
+            .ToDictionary(g => g.Key, g => g.First());
         var routes = watch.NotificationRoutes.Where(r => r.IsEnabled).ToList();
 
         foreach (var diff in diffs.Where(d => d.Kind != ListingChangeKind.Unchanged))
