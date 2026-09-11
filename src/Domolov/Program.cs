@@ -40,7 +40,6 @@ builder.Host.UseSerilog(
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -59,8 +58,11 @@ builder
         options.Cookie.Name = "domolov_auth";
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromDays(14);
+        // Docker / self-host often runs plain HTTP on :8080.
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
 builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddDomolovInfrastructure(builder.Configuration);
 
@@ -119,16 +121,26 @@ app.UseRequestLocalization(
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
 }
 else
 {
     app.MapOpenApi();
 }
 
+// Self-host Docker typically binds HTTP only (ASPNETCORE_URLS=http://+:8080).
+var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? string.Empty;
+if (urls.Contains("https://", StringComparison.OrdinalIgnoreCase))
+{
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+}
+
 app.UseSerilogRequestLogging();
 app.UseStatusCodePages();
-app.UseHttpsRedirection();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -137,6 +149,38 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+
+// Cookie login for the Blazor login form (full document POST + antiforgery).
+app.MapPost(
+        "/auth/login",
+        async Task<IResult> (
+            HttpContext http,
+            IOptions<DomolovOptions> options,
+            [FromForm] string password
+        ) =>
+        {
+            if (
+                string.IsNullOrEmpty(options.Value.AdminPassword)
+                || password != options.Value.AdminPassword
+            )
+            {
+                return Results.Redirect("/login?error=1");
+            }
+
+            var identity = new ClaimsIdentity(
+                [new Claim(ClaimTypes.Name, "admin")],
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+            await http.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity)
+            );
+            return Results.Redirect("/");
+        }
+    )
+    .AllowAnonymous()
+    .WithName("CookieLogin")
+    .WithSummary("Sign in via HTML form and set the auth cookie");
 
 var api = app.MapGroup("/api").RequireAuthorization();
 

@@ -27,7 +27,8 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 COPY --from=build /app/publish .
 COPY --from=build /root/.cache/ms-playwright /ms-playwright
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh \
+RUN sed -i 's/\r$//' /entrypoint.sh \
+    && chmod +x /entrypoint.sh \
     && mkdir -p /data/browser-profile /app/logs
 
 VOLUME ["/data/browser-profile"]

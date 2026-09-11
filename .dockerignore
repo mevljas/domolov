@@ -1,0 +1,11 @@
+**/.git
+**/bin
+**/obj
+**/coverage
+**/.vs
+**/.idea
+**/TestResults
+**/node_modules
+*.user
+*.suo
+.env

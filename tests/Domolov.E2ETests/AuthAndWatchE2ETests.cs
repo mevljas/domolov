@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using Domolov.Application.Abstractions;
 using Domolov.Application.Contracts;
 using Domolov.Domain.Providers;
@@ -72,6 +73,11 @@ public sealed class DomolovWebApplicationFactory : WebApplicationFactory<Program
 
 public sealed class AuthAndWatchE2ETests : IClassFixture<DomolovWebApplicationFactory>
 {
+    private static readonly Regex AntiforgeryTokenRegex = new(
+        "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled
+    );
+
     private readonly DomolovWebApplicationFactory _factory;
 
     public AuthAndWatchE2ETests(DomolovWebApplicationFactory factory) => _factory = factory;
@@ -110,5 +116,101 @@ public sealed class AuthAndWatchE2ETests : IClassFixture<DomolovWebApplicationFa
 
         var home = await client.GetAsync("/");
         home.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Login_page_emits_antiforgery_form_posting_to_auth_login()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        var loginPage = await client.GetAsync("/login");
+        loginPage.StatusCode.Should().Be(HttpStatusCode.OK);
+        var html = await loginPage.Content.ReadAsStringAsync();
+
+        html.Should()
+            .Contain("__RequestVerificationToken", "login form must emit an antiforgery token");
+        html.Should()
+            .Contain(
+                "action=\"/auth/login\"",
+                "login form must POST to /auth/login (not Blazor EditForm to /login)"
+            );
+        html.Should().Contain("data-enhance=\"false\"");
+    }
+
+    [Fact]
+    public async Task Cookie_login_without_antiforgery_is_rejected()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        using var content = new FormUrlEncodedContent(
+            new Dictionary<string, string> { ["password"] = "changeme" }
+        );
+
+        var response = await client.PostAsync("/auth/login", content);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Cookie_login_with_antiforgery_signs_in_and_redirects_home()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        var anonymousHome = await client.GetAsync("/");
+        anonymousHome.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        anonymousHome.Headers.Location?.ToString().Should().Contain("/login");
+
+        var loginPost = await PostCookieLoginAsync(client, "changeme");
+        loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        loginPost.Headers.Location?.ToString().Should().Be("/");
+
+        var home = await client.GetAsync("/");
+        home.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var watches = await client.GetAsync("/api/watches");
+        watches.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Cookie_login_with_wrong_password_redirects_back_to_login()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        var loginPost = await PostCookieLoginAsync(client, "not-the-password");
+        loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        loginPost.Headers.Location?.ToString().Should().Contain("/login?error=");
+
+        var home = await client.GetAsync("/");
+        home.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        home.Headers.Location?.ToString().Should().Contain("/login");
+    }
+
+    private static async Task<HttpResponseMessage> PostCookieLoginAsync(
+        HttpClient client,
+        string password
+    )
+    {
+        var loginPage = await client.GetAsync("/login");
+        loginPage.EnsureSuccessStatusCode();
+        var html = await loginPage.Content.ReadAsStringAsync();
+        var token = AntiforgeryTokenRegex.Match(html).Groups[1].Value;
+        token.Should().NotBeNullOrWhiteSpace();
+
+        using var content = new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["password"] = password,
+            }
+        );
+
+        return await client.PostAsync("/auth/login", content);
     }
 }
