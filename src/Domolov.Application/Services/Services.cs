@@ -174,9 +174,7 @@ public sealed class WatchService(IAppDbContext db, IListingProviderResolver prov
 
     private static string NormalizeCron(string? cron)
     {
-        var value = string.IsNullOrWhiteSpace(cron)
-            ? WatchCronSchedule.EveryHourCron
-            : cron.Trim();
+        var value = string.IsNullOrWhiteSpace(cron) ? WatchCronSchedule.EveryHourCron : cron.Trim();
         if (!WatchCronSchedule.TryValidate(value, out var error))
         {
             throw new ArgumentException(

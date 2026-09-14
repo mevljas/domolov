@@ -36,7 +36,10 @@ public static class ChromiumProfileLock
             return false;
         }
 
-        if (!TryReadLockTarget(lockPath, out var target) || !TryParseHostPid(target, out var host, out var pid))
+        if (
+            !TryReadLockTarget(lockPath, out var target)
+            || !TryParseHostPid(target, out var host, out var pid)
+        )
         {
             // Unreadable / unparseable lock after a crash — safe to clear.
             return ForceClear(userDataDir);
@@ -46,8 +49,7 @@ public static class ChromiumProfileLock
         var alive = isProcessAlive ?? DefaultIsProcessAlive;
 
         var stale =
-            !string.Equals(host, hostname, StringComparison.OrdinalIgnoreCase)
-            || !alive(pid);
+            !string.Equals(host, hostname, StringComparison.OrdinalIgnoreCase) || !alive(pid);
 
         return stale && ForceClear(userDataDir);
     }
@@ -76,9 +78,7 @@ public static class ChromiumProfileLock
             {
                 // Best-effort; launch may still fail.
             }
-            catch (UnauthorizedAccessException)
-            {
-            }
+            catch (UnauthorizedAccessException) { }
         }
 
         return removed;
@@ -92,10 +92,7 @@ public static class ChromiumProfileLock
             if (
                 message.Contains("profile appears to be in use", StringComparison.OrdinalIgnoreCase)
                 || message.Contains("SingletonLock", StringComparison.OrdinalIgnoreCase)
-                || message.Contains(
-                    "process_singleton",
-                    StringComparison.OrdinalIgnoreCase
-                )
+                || message.Contains("process_singleton", StringComparison.OrdinalIgnoreCase)
             )
             {
                 return true;

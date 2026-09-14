@@ -117,9 +117,7 @@ public static class WatchCronSchedule
         }
 
         var dayField =
-            selected.Count == 7
-                ? "*"
-                : CompressDayField(selected.Select(d => (int)d).ToList());
+            selected.Count == 7 ? "*" : CompressDayField(selected.Select(d => (int)d).ToList());
 
         return $"{time.Minute} {time.Hour} * * {dayField}";
     }
@@ -132,7 +130,10 @@ public static class WatchCronSchedule
     {
         time = default;
         days = Array.Empty<DayOfWeek>();
-        var parts = cron.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parts = cron.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+        );
         if (parts.Length != 5)
         {
             return false;
@@ -154,7 +155,10 @@ public static class WatchCronSchedule
         }
 
         // Interval-style hour fields are not weekly.
-        if (parts[1].Contains('*', StringComparison.Ordinal) || parts[0].Contains('*', StringComparison.Ordinal))
+        if (
+            parts[1].Contains('*', StringComparison.Ordinal)
+            || parts[0].Contains('*', StringComparison.Ordinal)
+        )
         {
             return false;
         }
@@ -205,7 +209,12 @@ public static class WatchCronSchedule
     private static bool TryExpandDayField(string field, out List<int> days)
     {
         days = [];
-        foreach (var token in field.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (
+            var token in field.Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+            )
+        )
         {
             if (token.Contains('-', StringComparison.Ordinal))
             {

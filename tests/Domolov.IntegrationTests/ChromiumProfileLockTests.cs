@@ -123,7 +123,10 @@ public sealed class ChromiumProfileLockTests
 
     private static string CreateTempProfile()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "domolov-chromium-lock-" + Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(
+            Path.GetTempPath(),
+            "domolov-chromium-lock-" + Guid.NewGuid().ToString("N")
+        );
         Directory.CreateDirectory(dir);
         return dir;
     }

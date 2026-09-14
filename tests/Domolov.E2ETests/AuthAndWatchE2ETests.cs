@@ -180,7 +180,10 @@ public sealed class AuthAndWatchE2ETests : IClassFixture<DomolovWebApplicationFa
         setCookie!
             .ToLowerInvariant()
             .Should()
-            .Match(c => c.Contains("expires=") || c.Contains("max-age="), "auth cookie must be persistent");
+            .Match(
+                c => c.Contains("expires=") || c.Contains("max-age="),
+                "auth cookie must be persistent"
+            );
 
         var home = await client.GetAsync("/");
         home.StatusCode.Should().Be(HttpStatusCode.OK);
