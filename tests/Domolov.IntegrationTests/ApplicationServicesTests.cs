@@ -68,6 +68,27 @@ public sealed class ApplicationServicesTests
         updated.IsEnabled.Should().BeFalse();
         updated.Cron.Should().Be("30 * * * *");
 
+        var act = () =>
+            watches.CreateAsync(
+                new CreateWatchRequest
+                {
+                    Name = "Bad",
+                    SearchUrl = "https://www.nepremicnine.net/oglasi-prodaja/",
+                    Cron = "not-a-cron",
+                }
+            );
+        await act.Should().ThrowAsync<ArgumentException>();
+
+        var weekday = await watches.CreateAsync(
+            new CreateWatchRequest
+            {
+                Name = "Weekday",
+                SearchUrl = "https://www.nepremicnine.net/oglasi-prodaja/maribor/",
+                Cron = "0 9 * * 1-5",
+            }
+        );
+        weekday.Cron.Should().Be("0 9 * * 1-5");
+
         (await watches.UpdateAsync(Guid.NewGuid(), updated.ToUpdate())).Should().BeNull();
 
         var route = await watches.AddRouteAsync(
@@ -191,6 +212,63 @@ public sealed class ApplicationServicesTests
 
         (await listings.SetBookmarkAsync(listing.Id, false)).Should().BeTrue();
         (await listings.GetDetailAsync(listing.Id))!.IsBookmarked.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ListingQueryService_DeleteAllAsync_clears_listings_and_cascades()
+    {
+        await using var root = BuildHost();
+        await using var scope = root.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var listings = scope.ServiceProvider.GetRequiredService<IListingQueryService>();
+
+        var watch = new Watch
+        {
+            Name = "w",
+            ProviderId = "nepremicnine",
+            SearchUrl = "https://www.nepremicnine.net/x/",
+        };
+        db.Watches.Add(watch);
+
+        var listing = new Listing
+        {
+            ProviderId = "nepremicnine",
+            ExternalId = "111",
+            Url = "https://www.nepremicnine.net/oglasi/111/",
+            Title = "Flat",
+        };
+        var other = new Listing
+        {
+            ProviderId = "nepremicnine",
+            ExternalId = "222",
+            Url = "https://www.nepremicnine.net/oglasi/222/",
+            Title = "House",
+        };
+        db.Listings.AddRange(listing, other);
+        await db.SaveChangesAsync();
+
+        db.PriceObservations.Add(
+            new PriceObservation
+            {
+                ListingId = listing.Id,
+                Amount = 100_000,
+                Currency = "EUR",
+            }
+        );
+        db.WatchSightings.Add(new WatchSighting { WatchId = watch.Id, ListingId = listing.Id });
+        db.Bookmarks.Add(new Bookmark { ListingId = listing.Id });
+        await db.SaveChangesAsync();
+
+        var deleted = await listings.DeleteAllAsync();
+        deleted.Should().Be(2);
+
+        (await db.Listings.CountAsync()).Should().Be(0);
+        (await db.PriceObservations.CountAsync()).Should().Be(0);
+        (await db.WatchSightings.CountAsync()).Should().Be(0);
+        (await db.Bookmarks.CountAsync()).Should().Be(0);
+        (await db.Watches.CountAsync()).Should().Be(1);
+
+        (await listings.DeleteAllAsync()).Should().Be(0);
     }
 
     [Fact]

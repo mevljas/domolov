@@ -151,7 +151,7 @@ public sealed class ScanOrchestrator : IScanOrchestrator
             )
         )
         {
-            pages = Math.Max(pages, 1);
+            pages = Math.Max(pages, card.PageIndex);
             var listing = await db
                 .Listings.Include(l => l.Prices)
                 .FirstOrDefaultAsync(
@@ -251,7 +251,7 @@ public sealed class ScanOrchestrator : IScanOrchestrator
             diffs.Add(new ListingDiff(card, kind, previous));
         }
 
-        run.PagesScanned = Math.Max(pages, diffs.Count > 0 ? 1 : 0);
+        run.PagesScanned = pages;
         run.NewCount = diffs.Count(d => d.Kind == ListingChangeKind.New);
         run.PriceChangeCount = diffs.Count(d =>
             d.Kind is ListingChangeKind.PriceDecreased or ListingChangeKind.PriceIncreased

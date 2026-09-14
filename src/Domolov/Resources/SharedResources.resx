@@ -38,6 +38,9 @@
   <data name="Listing" xml:space="preserve"><value>Listing</value></data>
   <data name="PriceHistory" xml:space="preserve"><value>Price history</value></data>
   <data name="NoBookmarks" xml:space="preserve"><value>No bookmarks yet.</value></data>
+  <data name="NoResults" xml:space="preserve"><value>No results yet.</value></data>
+  <data name="DeleteAllResults" xml:space="preserve"><value>Delete all results</value></data>
+  <data name="DeleteAllResultsConfirm" xml:space="preserve"><value>Delete every listing? Prices, sightings, and bookmarks will be removed. Watches are kept.</value></data>
   <data name="Watch" xml:space="preserve"><value>Watch</value></data>
   <data name="Status" xml:space="preserve"><value>Status</value></data>
   <data name="QueuedAt" xml:space="preserve"><value>Queued</value></data>
@@ -53,4 +56,23 @@
   <data name="Language" xml:space="preserve"><value>Language</value></data>
   <data name="LastScan" xml:space="preserve"><value>Last scan</value></data>
   <data name="Logout" xml:space="preserve"><value>Sign out</value></data>
+  <data name="Schedule" xml:space="preserve"><value>Schedule</value></data>
+  <data name="ScheduleEveryHour" xml:space="preserve"><value>Every hour</value></data>
+  <data name="ScheduleEvery6Hours" xml:space="preserve"><value>Every 6 hours</value></data>
+  <data name="ScheduleEvery12Hours" xml:space="preserve"><value>Every 12 hours</value></data>
+  <data name="ScheduleWeekly" xml:space="preserve"><value>Specific days and time</value></data>
+  <data name="ScheduleCustomMode" xml:space="preserve"><value>Custom (unchanged)</value></data>
+  <data name="ScheduleCustom" xml:space="preserve"><value>Custom cron: {0}</value></data>
+  <data name="ScheduleCustomHint" xml:space="preserve"><value>Choose another schedule above to replace this custom expression.</value></data>
+  <data name="ScheduleTime" xml:space="preserve"><value>Time</value></data>
+  <data name="ScheduleDays" xml:space="preserve"><value>Days</value></data>
+  <data name="ScheduleTimezoneHint" xml:space="preserve"><value>Times use {0}.</value></data>
+  <data name="SaveSchedule" xml:space="preserve"><value>Save schedule</value></data>
+  <data name="DaySunday" xml:space="preserve"><value>Sun</value></data>
+  <data name="DayMonday" xml:space="preserve"><value>Mon</value></data>
+  <data name="DayTuesday" xml:space="preserve"><value>Tue</value></data>
+  <data name="DayWednesday" xml:space="preserve"><value>Wed</value></data>
+  <data name="DayThursday" xml:space="preserve"><value>Thu</value></data>
+  <data name="DayFriday" xml:space="preserve"><value>Fri</value></data>
+  <data name="DaySaturday" xml:space="preserve"><value>Sat</value></data>
 </root>

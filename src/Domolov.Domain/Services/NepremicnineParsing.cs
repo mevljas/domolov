@@ -83,6 +83,21 @@ public static partial class NepremicnineParsing
     }
 }
 
+/// <summary>Crawl page-loop stop policy for search result pagination.</summary>
+public static class CrawlPagination
+{
+    public const int DefaultMaxPages = 50;
+
+    public static bool ShouldFetchPage(
+        int pageIndex,
+        int consecutiveEmptyPages,
+        int maxPages = DefaultMaxPages
+    ) => consecutiveEmptyPages < 1 && pageIndex <= maxPages;
+
+    public static int NextEmptyStreak(int foundOnPage, int consecutiveEmptyPages) =>
+        foundOnPage == 0 ? consecutiveEmptyPages + 1 : 0;
+}
+
 /// <summary>Cron evaluation in a configured IANA timezone.</summary>
 public static class WatchSchedule
 {

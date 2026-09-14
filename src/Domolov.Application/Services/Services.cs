@@ -2,6 +2,7 @@ using Domolov.Application.Abstractions;
 using Domolov.Application.Contracts;
 using Domolov.Domain.Entities;
 using Domolov.Domain.Enums;
+using Domolov.Domain.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -74,7 +75,7 @@ public sealed class WatchService(IAppDbContext db, IListingProviderResolver prov
             Name = request.Name.Trim(),
             SearchUrl = request.SearchUrl.Trim(),
             ProviderId = provider.Id,
-            Cron = string.IsNullOrWhiteSpace(request.Cron) ? "0 * * * *" : request.Cron.Trim(),
+            Cron = NormalizeCron(request.Cron),
             IsEnabled = request.IsEnabled,
         };
         db.Watches.Add(watch);
@@ -101,7 +102,7 @@ public sealed class WatchService(IAppDbContext db, IListingProviderResolver prov
         watch.Name = request.Name.Trim();
         watch.SearchUrl = request.SearchUrl.Trim();
         watch.ProviderId = provider.Id;
-        watch.Cron = request.Cron.Trim();
+        watch.Cron = NormalizeCron(request.Cron);
         watch.IsEnabled = request.IsEnabled;
         await db.SaveChangesAsync(cancellationToken);
         return Map(watch);
@@ -171,6 +172,24 @@ public sealed class WatchService(IAppDbContext db, IListingProviderResolver prov
         return true;
     }
 
+    private static string NormalizeCron(string? cron)
+    {
+        var value = string.IsNullOrWhiteSpace(cron)
+            ? WatchCronSchedule.EveryHourCron
+            : cron.Trim();
+        if (!WatchCronSchedule.TryValidate(value, out var error))
+        {
+            throw new ArgumentException(
+                string.IsNullOrWhiteSpace(error)
+                    ? "Invalid cron expression."
+                    : $"Invalid cron expression: {error}",
+                nameof(cron)
+            );
+        }
+
+        return value;
+    }
+
     private static WatchResponse Map(Watch watch) =>
         new(
             watch.Id,
@@ -212,6 +231,7 @@ public interface IListingQueryService
         bool bookmarked,
         CancellationToken cancellationToken = default
     );
+    Task<int> DeleteAllAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>Listing query implementation.</summary>
@@ -311,6 +331,19 @@ public sealed class ListingQueryService(IAppDbContext db) : IListingQueryService
 
         await db.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<int> DeleteAllAsync(CancellationToken cancellationToken = default)
+    {
+        var listings = await db.Listings.ToListAsync(cancellationToken);
+        if (listings.Count == 0)
+        {
+            return 0;
+        }
+
+        db.Listings.RemoveRange(listings);
+        await db.SaveChangesAsync(cancellationToken);
+        return listings.Count;
     }
 
     private static ListingResponse MapListItem(Listing listing)

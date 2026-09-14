@@ -20,6 +20,10 @@ public sealed class DomolovWebApplicationFactory : WebApplicationFactory<Program
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.UseSetting(
+            "DOMOLOV_DATA_PROTECTION_KEYS_DIR",
+            Path.Combine(Path.GetTempPath(), "domolov-dp-keys-e2e-" + Guid.NewGuid().ToString("N"))
+        );
         builder.ConfigureServices(services =>
         {
             RemoveDbRegistration(services);
@@ -169,6 +173,15 @@ public sealed class AuthAndWatchE2ETests : IClassFixture<DomolovWebApplicationFa
         loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
         loginPost.Headers.Location?.ToString().Should().Be("/");
 
+        var setCookie = loginPost
+            .Headers.GetValues("Set-Cookie")
+            .FirstOrDefault(c => c.StartsWith("domolov_auth=", StringComparison.Ordinal));
+        setCookie.Should().NotBeNullOrEmpty("login must set the domolov_auth cookie");
+        setCookie!
+            .ToLowerInvariant()
+            .Should()
+            .Match(c => c.Contains("expires=") || c.Contains("max-age="), "auth cookie must be persistent");
+
         var home = await client.GetAsync("/");
         home.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -185,7 +198,12 @@ public sealed class AuthAndWatchE2ETests : IClassFixture<DomolovWebApplicationFa
 
         var loginPost = await PostCookieLoginAsync(client, "not-the-password");
         loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        loginPost.Headers.Location?.ToString().Should().Contain("/login?error=");
+        loginPost.Headers.Location?.ToString().Should().Be("/login?error=true");
+
+        var errorPage = await client.GetAsync("/login?error=true");
+        errorPage.StatusCode.Should().Be(HttpStatusCode.OK);
+        var html = await errorPage.Content.ReadAsStringAsync();
+        html.Should().Contain("text-danger");
 
         var home = await client.GetAsync("/");
         home.StatusCode.Should().Be(HttpStatusCode.Redirect);

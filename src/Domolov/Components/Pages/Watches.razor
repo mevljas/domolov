@@ -4,8 +4,11 @@
 @using Domolov.Application.Contracts
 @using Domolov.Application.Services
 @using Domolov.Domain.Enums
+@using Domolov.Domain.Services
+@using Microsoft.Extensions.Options
 @inject IWatchService WatchService
 @inject IScanOrchestrator Orchestrator
+@inject IOptions<DomolovOptions> Options
 @inject IStringLocalizer<SharedResources> L
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
@@ -24,7 +27,7 @@
             <InputText class="form-control" @bind-Value="_create.SearchUrl" placeholder="@L["SearchUrl"]" />
         </div>
         <div class="mb-2">
-            <InputText class="form-control" @bind-Value="_create.Cron" placeholder="0 * * * *" />
+            <WatchScheduleEditor @bind-Cron="_create.Cron" TimeZoneId="@TimeZoneId" />
         </div>
         <button class="btn btn-primary" type="submit">@L["Save"]</button>
     </EditForm>
@@ -41,7 +44,17 @@ else
         <article class="mb-4 border-bottom pb-3">
             <h3>@w.Name</h3>
             <p><a href="@w.SearchUrl" target="_blank" rel="noopener">@w.SearchUrl</a></p>
-            <p>Cron: @w.Cron | @L["Baseline"]: @(w.HasCompletedBaseline ? L["Yes"] : L["No"])</p>
+            <p>@L["Schedule"]: @SummarizeSchedule(w.Cron) | @L["Baseline"]: @(w.HasCompletedBaseline ? L["Yes"] : L["No"])</p>
+            <div class="mb-2" style="max-width: 28rem">
+                <WatchScheduleEditor
+                    Cron="@GetEditCron(w.Id, w.Cron)"
+                    CronChanged="cron => OnEditCronChanged(w.Id, cron)"
+                    TimeZoneId="@TimeZoneId"
+                />
+                <button class="btn btn-sm btn-outline-primary mt-2" type="button" @onclick="() => SaveScheduleAsync(w)">
+                    @L["SaveSchedule"]
+                </button>
+            </div>
             <button class="btn btn-sm btn-secondary" @onclick="() => RunAsync(w.Id)">@L["RunNow"]</button>
             <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(w.Id)">@L["Delete"]</button>
 
@@ -71,17 +84,60 @@ else
 
 @code {
     private IReadOnlyList<WatchResponse>? _watches;
-    private CreateWatchRequest _create = new() { Name = "", SearchUrl = "https://www.nepremicnine.net/" };
+    private CreateWatchRequest _create = NewCreateRequest();
     private RouteForm _route = new();
+    private readonly Dictionary<Guid, string> _editCron = new();
+
+    private string TimeZoneId => Options.Value.TimeZone;
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 
-    private async Task ReloadAsync() => _watches = await WatchService.GetAllAsync();
+    private async Task ReloadAsync()
+    {
+        _watches = await WatchService.GetAllAsync();
+        _editCron.Clear();
+        if (_watches is not null)
+        {
+            foreach (var w in _watches)
+            {
+                _editCron[w.Id] = w.Cron;
+            }
+        }
+    }
+
+    private static CreateWatchRequest NewCreateRequest() =>
+        new()
+        {
+            Name = "",
+            SearchUrl = "https://www.nepremicnine.net/",
+            Cron = WatchCronSchedule.EveryHourCron,
+        };
+
+    private string GetEditCron(Guid id, string fallback) =>
+        _editCron.TryGetValue(id, out var cron) ? cron : fallback;
+
+    private void OnEditCronChanged(Guid id, string cron) => _editCron[id] = cron;
 
     private async Task CreateAsync()
     {
         await WatchService.CreateAsync(_create);
-        _create = new() { Name = "", SearchUrl = "https://www.nepremicnine.net/" };
+        _create = NewCreateRequest();
+        await ReloadAsync();
+    }
+
+    private async Task SaveScheduleAsync(WatchResponse watch)
+    {
+        var cron = GetEditCron(watch.Id, watch.Cron);
+        await WatchService.UpdateAsync(
+            watch.Id,
+            new UpdateWatchRequest
+            {
+                Name = watch.Name,
+                SearchUrl = watch.SearchUrl,
+                Cron = cron,
+                IsEnabled = watch.IsEnabled,
+            }
+        );
         await ReloadAsync();
     }
 
@@ -112,6 +168,41 @@ else
     {
         await WatchService.DeleteRouteAsync(watchId, routeId);
         await ReloadAsync();
+    }
+
+    private string SummarizeSchedule(string cron)
+    {
+        var model = WatchCronSchedule.Parse(cron);
+        return model.Mode switch
+        {
+            WatchCronMode.EveryHour => L["ScheduleEveryHour"],
+            WatchCronMode.Every6Hours => L["ScheduleEvery6Hours"],
+            WatchCronMode.Every12Hours => L["ScheduleEvery12Hours"],
+            WatchCronMode.Weekly => FormatWeekly(model),
+            WatchCronMode.Custom => string.Format(L["ScheduleCustom"], model.CustomCron),
+            _ => cron,
+        };
+    }
+
+    private string FormatWeekly(WatchCronModel model)
+    {
+        var days = string.Join(
+            ", ",
+            model.Days.Select(d =>
+                d switch
+                {
+                    DayOfWeek.Sunday => L["DaySunday"].Value,
+                    DayOfWeek.Monday => L["DayMonday"].Value,
+                    DayOfWeek.Tuesday => L["DayTuesday"].Value,
+                    DayOfWeek.Wednesday => L["DayWednesday"].Value,
+                    DayOfWeek.Thursday => L["DayThursday"].Value,
+                    DayOfWeek.Friday => L["DayFriday"].Value,
+                    DayOfWeek.Saturday => L["DaySaturday"].Value,
+                    _ => d.ToString(),
+                }
+            )
+        );
+        return $"{days} {model.Time:HH:mm}";
     }
 
     private sealed class RouteForm

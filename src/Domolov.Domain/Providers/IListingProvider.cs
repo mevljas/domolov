@@ -13,7 +13,8 @@ public sealed record ListingCard(
     string? Rooms,
     string? SizeText,
     string? YearText,
-    string? FloorText
+    string? FloorText,
+    int PageIndex = 1
 );
 
 /// <summary>Input for a provider crawl.</summary>

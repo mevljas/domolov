@@ -49,31 +49,91 @@ public sealed class PlaywrightBrowserHost(
             }
 
             _playwright ??= await Playwright.CreateAsync();
-            Directory.CreateDirectory(options.Value.BrowserUserDataDir);
+            var userDataDir = options.Value.BrowserUserDataDir;
+            Directory.CreateDirectory(userDataDir);
+
+            if (ChromiumProfileLock.TryClearStale(userDataDir))
+            {
+                logger.LogInformation(
+                    "Cleared stale Chromium profile lock under {UserDataDir}",
+                    userDataDir
+                );
+            }
+
             logger.LogInformation(
                 "Launching Chromium headless={Headless} userData={UserData}",
                 options.Value.BrowserHeadless,
-                options.Value.BrowserUserDataDir
+                userDataDir
             );
 
-            _context = await _playwright.Chromium.LaunchPersistentContextAsync(
-                options.Value.BrowserUserDataDir,
-                new BrowserTypeLaunchPersistentContextOptions
-                {
-                    Headless = options.Value.BrowserHeadless,
-                    Locale = "sl-SI",
-                    UserAgent =
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-                    Args = ["--disable-blink-features=AutomationControlled"],
-                    ViewportSize = new ViewportSize { Width = 1365, Height = 900 },
-                }
-            );
+            _context = await LaunchPersistentAsync(userDataDir);
             return _context;
         }
         finally
         {
             _lock.Release();
         }
+    }
+
+    private async Task<IBrowserContext> LaunchPersistentAsync(string userDataDir)
+    {
+        var launchOptions = new BrowserTypeLaunchPersistentContextOptions
+        {
+            Headless = options.Value.BrowserHeadless,
+            Locale = "sl-SI",
+            UserAgent =
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            Args = ["--disable-blink-features=AutomationControlled"],
+            ViewportSize = new ViewportSize { Width = 1365, Height = 900 },
+        };
+
+        try
+        {
+            return await _playwright!.Chromium.LaunchPersistentContextAsync(
+                userDataDir,
+                launchOptions
+            );
+        }
+        catch (Exception ex)
+            when (IsTargetClosed(ex) || ChromiumProfileLock.LooksLikeProfileInUse(ex))
+        {
+            logger.LogWarning(
+                ex,
+                "Chromium profile lock conflict under {UserDataDir}; clearing and retrying once",
+                userDataDir
+            );
+            if (ChromiumProfileLock.ForceClear(userDataDir))
+            {
+                logger.LogInformation(
+                    "Cleared stale Chromium profile lock under {UserDataDir}",
+                    userDataDir
+                );
+            }
+
+            return await _playwright!.Chromium.LaunchPersistentContextAsync(
+                userDataDir,
+                launchOptions
+            );
+        }
+    }
+
+    private static bool IsTargetClosed(Exception exception)
+    {
+        for (var ex = exception; ex is not null; ex = ex.InnerException)
+        {
+            if (
+                ex.GetType().Name.Contains("TargetClosed", StringComparison.Ordinal)
+                || ex.Message.Contains(
+                    "Target page, context or browser has been closed",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async ValueTask DisposeAsync()
@@ -112,7 +172,7 @@ public sealed class NepremicnineProvider(
             var pageIndex = 1;
             var emptyPages = 0;
 
-            while (emptyPages < 1 && pageIndex <= 50)
+            while (CrawlPagination.ShouldFetchPage(pageIndex, emptyPages))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var url = NepremicnineParsing.BuildPageUrl(request.SearchUrl, pageIndex);
@@ -175,7 +235,7 @@ public sealed class NepremicnineProvider(
                     ListingCard? parsed = null;
                     try
                     {
-                        parsed = await ParseCardAsync(cards.Nth(i));
+                        parsed = await ParseCardAsync(cards.Nth(i), pageIndex);
                     }
                     catch (Exception ex)
                     {
@@ -191,15 +251,7 @@ public sealed class NepremicnineProvider(
                     yield return parsed;
                 }
 
-                if (foundOnPage == 0)
-                {
-                    emptyPages++;
-                }
-                else
-                {
-                    emptyPages = 0;
-                }
-
+                emptyPages = CrawlPagination.NextEmptyStreak(foundOnPage, emptyPages);
                 pageIndex++;
             }
         }
@@ -230,7 +282,7 @@ public sealed class NepremicnineProvider(
         }
     }
 
-    private static async Task<ListingCard?> ParseCardAsync(ILocator card)
+    private static async Task<ListingCard?> ParseCardAsync(ILocator card, int pageIndex)
     {
         var link = card.Locator("a[href*='/oglasi-']").First;
         if (await link.CountAsync() == 0)
@@ -311,7 +363,8 @@ public sealed class NepremicnineProvider(
             null,
             null,
             null,
-            null
+            null,
+            pageIndex
         );
     }
 }

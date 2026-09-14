@@ -5,11 +5,22 @@
 @inject IListingQueryService Listings
 @inject IWatchService Watches
 @inject IStringLocalizer<SharedResources> L
+@inject IJSRuntime Js
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>@L["NavResults"]</PageTitle>
 
-<h1>@L["NavResults"]</h1>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="mb-0">@L["NavResults"]</h1>
+    <button
+        class="btn btn-outline-danger"
+        type="button"
+        disabled="@(_busy || _items is null || _items.Count == 0)"
+        @onclick="DeleteAllAsync"
+    >
+        @L["DeleteAllResults"]
+    </button>
+</div>
 
 <div class="mb-3">
     <label>@L["FilterWatch"]</label>
@@ -28,6 +39,10 @@
 @if (_items is null)
 {
     <p>@L["Loading"]</p>
+}
+else if (_items.Count == 0)
+{
+    <p class="text-muted">@L["NoResults"]</p>
 }
 else
 {
@@ -56,6 +71,7 @@ else
     private IReadOnlyList<ListingResponse>? _items;
     private IReadOnlyList<WatchResponse>? _watches;
     private string _watchIdText = "";
+    private bool _busy;
 
     protected override async Task OnInitializedAsync()
     {
@@ -73,5 +89,30 @@ else
     {
         await Listings.SetBookmarkAsync(item.Id, !item.IsBookmarked);
         await ReloadAsync();
+    }
+
+    private async Task DeleteAllAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        var confirmed = await Js.InvokeAsync<bool>("confirm", L["DeleteAllResultsConfirm"].Value);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Listings.DeleteAllAsync();
+            await ReloadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 }

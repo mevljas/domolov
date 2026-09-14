@@ -9,6 +9,7 @@ using Domolov.Infrastructure;
 using Domolov.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,6 +50,16 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
+
+// Persist Data Protection keys so cookie auth tickets survive container restarts.
+var dataProtectionKeysDir = new DirectoryInfo(
+    builder.Configuration["DOMOLOV_DATA_PROTECTION_KEYS_DIR"] ?? "/data/data-protection-keys"
+);
+Directory.CreateDirectory(dataProtectionKeysDir.FullName);
+builder
+    .Services.AddDataProtection()
+    .PersistKeysToFileSystem(dataProtectionKeysDir)
+    .SetApplicationName("Domolov");
 
 builder
     .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -164,7 +175,7 @@ app.MapPost(
                 || password != options.Value.AdminPassword
             )
             {
-                return Results.Redirect("/login?error=1");
+                return Results.Redirect("/login?error=true");
             }
 
             var identity = new ClaimsIdentity(
@@ -173,7 +184,12 @@ app.MapPost(
             );
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity)
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
+                }
             );
             return Results.Redirect("/");
         }
@@ -206,7 +222,12 @@ api.MapPost(
             );
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity)
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
+                }
             );
             return TypedResults.Ok();
         }
@@ -348,6 +369,16 @@ api.MapGet(
         ) => TypedResults.Ok(await listings.GetForWatchAsync(watchId, bookmarkedOnly, ct))
     )
     .WithName("ListListings");
+
+api.MapDelete(
+        "/listings",
+        async Task<Ok<DeleteAllListingsResponse>> (
+            IListingQueryService listings,
+            CancellationToken ct
+        ) => TypedResults.Ok(new DeleteAllListingsResponse(await listings.DeleteAllAsync(ct)))
+    )
+    .WithName("DeleteAllListings")
+    .WithSummary("Delete every listing (prices, sightings, and bookmarks cascade)");
 
 api.MapGet(
         "/listings/{id:guid}",

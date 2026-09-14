@@ -64,6 +64,22 @@ public sealed class NepremicnineParsingTests
     }
 
     [Fact]
+    public void BuildPageUrl_supports_deep_moste_polje_path()
+    {
+        var baseUrl = new Uri(
+            "https://www.nepremicnine.net/oglasi-prodaja/ljubljana-mesto/lj-moste-polje/stanovanje/"
+        );
+        NepremicnineParsing.BuildPageUrl(baseUrl, 1).Should().Be(baseUrl);
+        NepremicnineParsing
+            .BuildPageUrl(baseUrl, 2)
+            .ToString()
+            .Should()
+            .Be(
+                "https://www.nepremicnine.net/oglasi-prodaja/ljubljana-mesto/lj-moste-polje/stanovanje/2/"
+            );
+    }
+
+    [Fact]
     public void LooksLikeCloudflareChallenge_detects_interstitial()
     {
         NepremicnineParsing
@@ -111,5 +127,35 @@ public sealed class WatchScheduleTests
         var now = DateTimeOffset.Parse("2026-08-30T12:05:00Z");
         var last = DateTimeOffset.Parse("2026-08-30T12:00:00Z");
         WatchSchedule.IsDue("0 * * * *", last, now, tz).Should().BeFalse();
+    }
+}
+
+public sealed class CrawlPaginationTests
+{
+    [Fact]
+    public void ShouldFetchPage_stops_after_empty_streak()
+    {
+        CrawlPagination.ShouldFetchPage(1, consecutiveEmptyPages: 0).Should().BeTrue();
+        CrawlPagination.ShouldFetchPage(2, consecutiveEmptyPages: 1).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShouldFetchPage_respects_max_pages()
+    {
+        CrawlPagination
+            .ShouldFetchPage(CrawlPagination.DefaultMaxPages, consecutiveEmptyPages: 0)
+            .Should()
+            .BeTrue();
+        CrawlPagination
+            .ShouldFetchPage(CrawlPagination.DefaultMaxPages + 1, consecutiveEmptyPages: 0)
+            .Should()
+            .BeFalse();
+    }
+
+    [Fact]
+    public void NextEmptyStreak_resets_when_page_has_listings()
+    {
+        CrawlPagination.NextEmptyStreak(foundOnPage: 3, consecutiveEmptyPages: 0).Should().Be(0);
+        CrawlPagination.NextEmptyStreak(foundOnPage: 0, consecutiveEmptyPages: 0).Should().Be(1);
     }
 }

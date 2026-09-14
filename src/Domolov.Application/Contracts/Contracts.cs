@@ -91,6 +91,9 @@ public sealed record ListingResponse(
     bool IsBookmarked
 );
 
+/// <summary>Result of wiping every listing.</summary>
+public sealed record DeleteAllListingsResponse(int Deleted);
+
 /// <summary>Listing detail with price history.</summary>
 public sealed record ListingDetailResponse(
     Guid Id,

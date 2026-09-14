@@ -1,0 +1,193 @@
+@using Domolov.Domain.Services
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<SharedResources> L
+
+<div class="watch-schedule-editor">
+    <label class="form-label" for="@_modeId">@L["Schedule"]</label>
+    <select id="@_modeId" class="form-select mb-2" value="@ModeValue" @onchange="OnModeChanged">
+        <option value="@((int)WatchCronMode.EveryHour)">@L["ScheduleEveryHour"]</option>
+        <option value="@((int)WatchCronMode.Every6Hours)">@L["ScheduleEvery6Hours"]</option>
+        <option value="@((int)WatchCronMode.Every12Hours)">@L["ScheduleEvery12Hours"]</option>
+        <option value="@((int)WatchCronMode.Weekly)">@L["ScheduleWeekly"]</option>
+        @if (_model.Mode == WatchCronMode.Custom)
+        {
+            <option value="@((int)WatchCronMode.Custom)">@L["ScheduleCustomMode"]</option>
+        }
+    </select>
+
+    @if (_model.Mode == WatchCronMode.Weekly)
+    {
+        <div class="mb-2">
+            <label class="form-label" for="@_timeId">@L["ScheduleTime"]</label>
+            <input
+                id="@_timeId"
+                type="time"
+                class="form-control"
+                step="60"
+                value="@_timeValue"
+                @onchange="OnTimeChanged"
+            />
+        </div>
+        <fieldset class="mb-2">
+            <legend class="form-label fs-6">@L["ScheduleDays"]</legend>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var day in WatchCronModel.AllDays)
+                {
+                    var id = $"{_daysId}-{(int)day}";
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="@id"
+                            checked="@_selectedDays.Contains(day)"
+                            @onchange="e => OnDayChanged(day, e.Value is bool b && b)"
+                        />
+                        <label class="form-check-label" for="@id">@DayLabel(day)</label>
+                    </div>
+                }
+            </div>
+        </fieldset>
+    }
+    else if (_model.Mode == WatchCronMode.Custom)
+    {
+        <p class="text-muted small mb-2">@string.Format(L["ScheduleCustom"], _model.CustomCron)</p>
+        <p class="text-muted small">@L["ScheduleCustomHint"]</p>
+    }
+
+    <p class="form-text mb-0">@string.Format(L["ScheduleTimezoneHint"], TimeZoneId)</p>
+</div>
+
+@code {
+    private readonly string _modeId = "sched-mode-" + Guid.NewGuid().ToString("N");
+    private readonly string _timeId = "sched-time-" + Guid.NewGuid().ToString("N");
+    private readonly string _daysId = "sched-days-" + Guid.NewGuid().ToString("N");
+
+    private WatchCronModel _model = new();
+    private HashSet<DayOfWeek> _selectedDays = new(WatchCronModel.AllDays);
+    private string _timeValue = "09:00";
+    private string _lastCron = WatchCronSchedule.EveryHourCron;
+
+    [Parameter]
+    public string Cron { get; set; } = WatchCronSchedule.EveryHourCron;
+
+    [Parameter]
+    public EventCallback<string> CronChanged { get; set; }
+
+    [Parameter]
+    public string TimeZoneId { get; set; } = "Europe/Ljubljana";
+
+    private string ModeValue => ((int)_model.Mode).ToString();
+
+    protected override void OnParametersSet()
+    {
+        if (string.Equals(Cron, _lastCron, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Hydrate(Cron);
+    }
+
+    private void Hydrate(string cron)
+    {
+        _lastCron = cron;
+        _model = WatchCronSchedule.Parse(cron);
+        _selectedDays = new HashSet<DayOfWeek>(
+            _model.Mode == WatchCronMode.Weekly ? _model.Days : WatchCronModel.AllDays
+        );
+        _timeValue = $"{_model.Time.Hour:D2}:{_model.Time.Minute:D2}";
+    }
+
+    private async Task OnModeChanged(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var modeInt))
+        {
+            return;
+        }
+
+        var mode = (WatchCronMode)modeInt;
+        if (mode == WatchCronMode.Custom)
+        {
+            return;
+        }
+
+        if (mode == WatchCronMode.Weekly && _selectedDays.Count == 0)
+        {
+            _selectedDays = new HashSet<DayOfWeek>(WatchCronModel.AllDays);
+        }
+
+        _model = new WatchCronModel
+        {
+            Mode = mode,
+            Time = ParseTime(_timeValue),
+            Days = _selectedDays.OrderBy(d => (int)d).ToList(),
+        };
+        await EmitCronAsync();
+    }
+
+    private async Task OnTimeChanged(ChangeEventArgs e)
+    {
+        _timeValue = e.Value?.ToString() ?? "09:00";
+        if (_model.Mode != WatchCronMode.Weekly)
+        {
+            return;
+        }
+
+        _model = new WatchCronModel
+        {
+            Mode = WatchCronMode.Weekly,
+            Time = ParseTime(_timeValue),
+            Days = _selectedDays.OrderBy(d => (int)d).ToList(),
+        };
+        await EmitCronAsync();
+    }
+
+    private async Task OnDayChanged(DayOfWeek day, bool selected)
+    {
+        if (selected)
+        {
+            _selectedDays.Add(day);
+        }
+        else
+        {
+            _selectedDays.Remove(day);
+        }
+
+        if (_selectedDays.Count == 0)
+        {
+            _selectedDays.Add(day);
+        }
+
+        _model = new WatchCronModel
+        {
+            Mode = WatchCronMode.Weekly,
+            Time = ParseTime(_timeValue),
+            Days = _selectedDays.OrderBy(d => (int)d).ToList(),
+        };
+        await EmitCronAsync();
+    }
+
+    private async Task EmitCronAsync()
+    {
+        var cron = WatchCronSchedule.ToCron(_model);
+        _lastCron = cron;
+        Cron = cron;
+        await CronChanged.InvokeAsync(cron);
+    }
+
+    private static TimeOnly ParseTime(string value) =>
+        TimeOnly.TryParse(value, out var t) ? t : new TimeOnly(9, 0);
+
+    private string DayLabel(DayOfWeek day) =>
+        day switch
+        {
+            DayOfWeek.Sunday => L["DaySunday"],
+            DayOfWeek.Monday => L["DayMonday"],
+            DayOfWeek.Tuesday => L["DayTuesday"],
+            DayOfWeek.Wednesday => L["DayWednesday"],
+            DayOfWeek.Thursday => L["DayThursday"],
+            DayOfWeek.Friday => L["DayFriday"],
+            DayOfWeek.Saturday => L["DaySaturday"],
+            _ => day.ToString(),
+        };
+}

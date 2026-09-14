@@ -144,6 +144,82 @@ public sealed class ScanOrchestratorTests
     }
 
     [Fact]
+    public async Task Multi_page_crawl_sets_PagesScanned_to_max_page_index()
+    {
+        await using var root = BuildProvider(
+            new FakeListingProvider(
+                [
+                    new ListingCard(
+                        "1",
+                        "https://example.com/1/",
+                        "A",
+                        100,
+                        "EUR",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        PageIndex: 1
+                    ),
+                    new ListingCard(
+                        "2",
+                        "https://example.com/2/",
+                        "B",
+                        200,
+                        "EUR",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        PageIndex: 2
+                    ),
+                    new ListingCard(
+                        "3",
+                        "https://example.com/3/",
+                        "C",
+                        300,
+                        "EUR",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        PageIndex: 3
+                    ),
+                ]
+            )
+        );
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+        var watch = new Watch
+        {
+            Name = "t",
+            ProviderId = "fake",
+            SearchUrl = "https://example.com/search",
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        var runId = await orchestrator.EnqueueAsync(watch.Id);
+        await orchestrator.ProcessQueuedAsync();
+
+        var run = await db.ScanRuns.AsNoTracking().SingleAsync(r => r.Id == runId);
+        run.PagesScanned.Should().Be(3);
+        run.Status.Should().Be(ScanRunStatus.Baseline);
+        (await db.Listings.CountAsync()).Should().Be(3);
+    }
+
+    [Fact]
     public async Task Duplicate_enqueue_returns_existing_run()
     {
         await using var root = BuildProvider(new FakeListingProvider([]));

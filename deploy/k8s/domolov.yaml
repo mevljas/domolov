@@ -13,6 +13,7 @@ data:
   DOMOLOV_MAX_CONCURRENT_SCANS: "2"
   DOMOLOV_BROWSER_HEADLESS: "false"
   DOMOLOV_BROWSER_USER_DATA_DIR: /data/browser-profile
+  DOMOLOV_DATA_PROTECTION_KEYS_DIR: /data/data-protection-keys
   DOMOLOV_LOG_LEVEL: Information
   DOMOLOV_ROLE: all
   ASPNETCORE_URLS: http://+:8080
@@ -37,6 +38,17 @@ spec:
   resources:
     requests:
       storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: domolov-data-protection-keys
+  namespace: domolov
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 64Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -66,6 +78,8 @@ spec:
           volumeMounts:
             - name: browser-profile
               mountPath: /data/browser-profile
+            - name: data-protection-keys
+              mountPath: /data/data-protection-keys
           resources:
             requests:
               cpu: "250m"
@@ -89,6 +103,9 @@ spec:
         - name: browser-profile
           persistentVolumeClaim:
             claimName: domolov-browser-profile
+        - name: data-protection-keys
+          persistentVolumeClaim:
+            claimName: domolov-data-protection-keys
 ---
 apiVersion: v1
 kind: Service
