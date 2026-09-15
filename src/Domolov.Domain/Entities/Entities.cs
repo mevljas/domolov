@@ -53,6 +53,8 @@ public sealed class Listing
     public string? SizeText { get; set; }
     public string? YearText { get; set; }
     public string? FloorText { get; set; }
+    public string? Location { get; set; }
+    public string? LandSizeText { get; set; }
     public DateTimeOffset FirstSeenAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset LastSeenAt { get; set; } = DateTimeOffset.UtcNow;
 

@@ -291,6 +291,8 @@ public sealed class ListingQueryService(IAppDbContext db) : IListingQueryService
             listing.SizeText,
             listing.YearText,
             listing.FloorText,
+            listing.Location,
+            listing.LandSizeText,
             listing.Bookmark is not null,
             listing
                 .Prices.OrderBy(p => p.ObservedAt)
@@ -360,6 +362,8 @@ public sealed class ListingQueryService(IAppDbContext db) : IListingQueryService
             listing.SizeText,
             listing.YearText,
             listing.FloorText,
+            listing.Location,
+            listing.LandSizeText,
             latest?.Amount,
             latest?.Currency ?? "EUR",
             listing.FirstSeenAt,

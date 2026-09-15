@@ -84,6 +84,8 @@ public sealed record ListingResponse(
     string? SizeText,
     string? YearText,
     string? FloorText,
+    string? Location,
+    string? LandSizeText,
     decimal? LatestPrice,
     string Currency,
     DateTimeOffset FirstSeenAt,
@@ -108,6 +110,8 @@ public sealed record ListingDetailResponse(
     string? SizeText,
     string? YearText,
     string? FloorText,
+    string? Location,
+    string? LandSizeText,
     bool IsBookmarked,
     IReadOnlyList<PricePointResponse> Prices
 );

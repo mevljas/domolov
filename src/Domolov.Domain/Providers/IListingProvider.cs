@@ -14,6 +14,8 @@ public sealed record ListingCard(
     string? SizeText,
     string? YearText,
     string? FloorText,
+    string? Location = null,
+    string? LandSizeText = null,
     int PageIndex = 1
 );
 

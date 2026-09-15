@@ -183,6 +183,8 @@ public sealed class ScanOrchestrator : IScanOrchestrator
                     SizeText = card.SizeText,
                     YearText = card.YearText,
                     FloorText = card.FloorText,
+                    Location = card.Location,
+                    LandSizeText = card.LandSizeText,
                 };
                 db.Listings.Add(listing);
                 await db.SaveChangesAsync(cancellationToken);
@@ -198,6 +200,8 @@ public sealed class ScanOrchestrator : IScanOrchestrator
                 listing.SizeText = card.SizeText ?? listing.SizeText;
                 listing.YearText = card.YearText ?? listing.YearText;
                 listing.FloorText = card.FloorText ?? listing.FloorText;
+                listing.Location = card.Location ?? listing.Location;
+                listing.LandSizeText = card.LandSizeText ?? listing.LandSizeText;
                 listing.LastSeenAt = DateTimeOffset.UtcNow;
             }
 
@@ -307,7 +311,16 @@ public sealed class ScanOrchestrator : IScanOrchestrator
                             diff.Card.Url,
                             RewriteImageHost(diff.Card.ImageUrl),
                             diff.Card.Price,
-                            diff.PreviousPrice is null ? null : [diff.PreviousPrice.Value]
+                            diff.PreviousPrice is null ? null : [diff.PreviousPrice.Value],
+                            diff.Card.Currency,
+                            diff.Card.Location,
+                            diff.Card.PropertyType,
+                            diff.Card.Rooms,
+                            diff.Card.SizeText,
+                            diff.Card.YearText,
+                            diff.Card.FloorText,
+                            diff.Card.LandSizeText,
+                            diff.Card.Description
                         ),
                         cancellationToken
                     );
@@ -337,9 +350,9 @@ public sealed class ScanOrchestrator : IScanOrchestrator
         {
             ListingChangeKind.New => "New listing",
             ListingChangeKind.PriceDecreased =>
-                $"Price decreased from {diff.PreviousPrice} to {diff.Card.Price}",
+                $"Price decreased from {PriceFormatting.Format(diff.PreviousPrice!.Value, diff.Card.Currency)} to {PriceFormatting.Format(diff.Card.Price!.Value, diff.Card.Currency)}",
             ListingChangeKind.PriceIncreased =>
-                $"Price increased from {diff.PreviousPrice} to {diff.Card.Price}",
+                $"Price increased from {PriceFormatting.Format(diff.PreviousPrice!.Value, diff.Card.Currency)} to {PriceFormatting.Format(diff.Card.Price!.Value, diff.Card.Currency)}",
             _ => "Listing update",
         };
 

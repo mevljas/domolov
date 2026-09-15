@@ -1,0 +1,113 @@
+@using Domolov.Application.Contracts
+@using Domolov.Domain.Services
+@inject IStringLocalizer<SharedResources> L
+
+<article class="listing-summary-card">
+    @if (!string.IsNullOrEmpty(Item.ImageUrl))
+    {
+        <a class="listing-summary-card__media" href="listings/@Item.Id">
+            <img src="@Item.ImageUrl" alt="" />
+        </a>
+    }
+    <div class="listing-summary-card__body">
+        @if (!string.IsNullOrWhiteSpace(TypeRoomsLine))
+        {
+            <p class="listing-summary-card__type">@TypeRoomsLine</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Item.Location))
+        {
+            <h3 class="listing-summary-card__location">
+                <a href="listings/@Item.Id">@Item.Location</a>
+            </h3>
+        }
+        else
+        {
+            <h3 class="listing-summary-card__location">
+                <a href="listings/@Item.Id">@Item.Title</a>
+            </h3>
+        }
+        @if (!string.IsNullOrWhiteSpace(ShortDescription))
+        {
+            <p class="listing-summary-card__desc">@ShortDescription</p>
+        }
+        @if (AttributeParts.Count > 0)
+        {
+            <p class="listing-summary-card__attrs">@string.Join(" · ", AttributeParts)</p>
+        }
+        @if (Item.LatestPrice is decimal price)
+        {
+            <p class="listing-summary-card__price">@PriceFormatting.Format(price, Item.Currency)</p>
+        }
+        <div class="listing-summary-card__actions">
+            <button class="btn btn-sm btn-outline-secondary" @onclick="OnToggleBookmark">
+                @(Item.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
+            </button>
+            <a class="btn btn-sm btn-link" href="@Item.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public ListingResponse Item { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnToggleBookmark { get; set; }
+
+    private string? TypeRoomsLine
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Item.PropertyType) && !string.IsNullOrWhiteSpace(Item.Rooms))
+            {
+                return $"{Item.PropertyType}, {Item.Rooms}";
+            }
+
+            return Item.PropertyType ?? Item.Rooms;
+        }
+    }
+
+    private string? ShortDescription
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Item.Description))
+            {
+                return null;
+            }
+
+            var text = Item.Description.Trim();
+            const int max = 110;
+            return text.Length <= max ? text : text[..(max - 1)].TrimEnd() + "…";
+        }
+    }
+
+    private IReadOnlyList<string> AttributeParts
+    {
+        get
+        {
+            var parts = new List<string>(4);
+            if (!string.IsNullOrWhiteSpace(Item.SizeText))
+            {
+                parts.Add(Item.SizeText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(Item.YearText))
+            {
+                parts.Add(Item.YearText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(Item.FloorText))
+            {
+                parts.Add(Item.FloorText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(Item.LandSizeText))
+            {
+                parts.Add(Item.LandSizeText);
+            }
+
+            return parts;
+        }
+    }
+}

@@ -124,12 +124,14 @@ public sealed class ScanOrchestratorTests
                 200,
                 "EUR",
                 null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
+                "Nice flat near park",
+                "Stanovanje",
+                "2-sobno",
+                "73 m2",
+                "1925",
+                "PK/1",
+                Location: "KODELJEVO",
+                LandSizeText: "16 m2"
             )
         );
         FakeNotifier.Sent.Clear();
@@ -137,7 +139,16 @@ public sealed class ScanOrchestratorTests
         await orchestrator.EnqueueAsync(watch.Id);
         await orchestrator.ProcessQueuedAsync();
 
-        FakeNotifier.Sent.Should().ContainSingle(m => m.Title == "B");
+        var sent = FakeNotifier.Sent.Should().ContainSingle(m => m.Title == "B").Subject;
+        sent.Location.Should().Be("KODELJEVO");
+        sent.PropertyType.Should().Be("Stanovanje");
+        sent.Rooms.Should().Be("2-sobno");
+        sent.SizeText.Should().Be("73 m2");
+        sent.YearText.Should().Be("1925");
+        sent.FloorText.Should().Be("PK/1");
+        sent.LandSizeText.Should().Be("16 m2");
+        sent.Currency.Should().Be("EUR");
+        sent.Price.Should().Be(200);
         (await db.ScanRuns.AsNoTracking().OrderByDescending(r => r.QueuedAt).FirstAsync())
             .Status.Should()
             .Be(ScanRunStatus.Succeeded);

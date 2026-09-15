@@ -21,5 +21,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Domolov.Domain\Domolov.Domain.csproj" />
     <ProjectReference Include="..\..\src\Domolov.Application\Domolov.Application.csproj" />
+    <ProjectReference Include="..\..\src\Domolov.Infrastructure\Domolov.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

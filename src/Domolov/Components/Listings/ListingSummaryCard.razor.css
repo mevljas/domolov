@@ -1,0 +1,89 @@
+.listing-summary-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #fff;
+    overflow: hidden;
+}
+
+.listing-summary-card__media {
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #e9ecef;
+}
+
+.listing-summary-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.listing-summary-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.75rem 0.85rem 0.85rem;
+    flex: 1;
+}
+
+.listing-summary-card__type {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #5c6570;
+    line-height: 1.3;
+}
+
+.listing-summary-card__location {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.listing-summary-card__location a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.listing-summary-card__location a:hover {
+    text-decoration: underline;
+}
+
+.listing-summary-card__desc {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #4a5560;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.listing-summary-card__attrs {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #6c757d;
+    letter-spacing: 0.01em;
+}
+
+.listing-summary-card__price {
+    margin: 0.15rem 0 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0b3d2e;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.listing-summary-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 0.35rem;
+}

@@ -351,20 +351,44 @@ public sealed class NepremicnineProvider(
             description = (await descLoc.InnerTextAsync()).Trim();
         }
 
+        string? categoryLine = null;
+        var cardText = await card.InnerTextAsync();
+        foreach (
+            var line in cardText.Split(
+                ['\r', '\n'],
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+            )
+        )
+        {
+            if (
+                line.StartsWith("Prodaja:", StringComparison.OrdinalIgnoreCase)
+                || line.StartsWith("Oddaja:", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                categoryLine = line;
+                break;
+            }
+        }
+
+        var attrs = NepremicnineParsing.ParseCardAttributes(categoryLine, description);
+        var resolvedTitle = string.IsNullOrWhiteSpace(title) ? externalId : title;
+
         return new ListingCard(
             externalId,
             href,
-            string.IsNullOrWhiteSpace(title) ? externalId : title,
+            resolvedTitle,
             price,
             "EUR",
             image,
             description,
-            null,
-            null,
-            null,
-            null,
-            null,
-            pageIndex
+            attrs.PropertyType,
+            attrs.Rooms,
+            attrs.SizeText,
+            attrs.YearText,
+            attrs.FloorText,
+            Location: resolvedTitle,
+            LandSizeText: attrs.LandSizeText,
+            PageIndex: pageIndex
         );
     }
 }

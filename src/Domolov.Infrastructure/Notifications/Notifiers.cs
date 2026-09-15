@@ -54,16 +54,28 @@ public sealed class DiscordNotifier(HttpClient http, ILogger<DiscordNotifier> lo
         }
     }
 
-    private static object[] BuildFields(NotificationMessage message)
+    public static object[] BuildFields(NotificationMessage message)
     {
         var fields = new List<object>();
+        foreach (var (name, value) in NotificationContent.MetadataPairs(message))
+        {
+            fields.Add(
+                new
+                {
+                    name,
+                    value,
+                    inline = true,
+                }
+            );
+        }
+
         if (message.Price is decimal price)
         {
             fields.Add(
                 new
                 {
                     name = "Price",
-                    value = $"{price} EUR",
+                    value = NotificationContent.FormatPrice(price, message.Currency),
                     inline = true,
                 }
             );
@@ -75,7 +87,12 @@ public sealed class DiscordNotifier(HttpClient http, ILogger<DiscordNotifier> lo
                 new
                 {
                     name = "Previous",
-                    value = string.Join(", ", message.PreviousPrices),
+                    value = string.Join(
+                        ", ",
+                        message.PreviousPrices.Select(p =>
+                            NotificationContent.FormatPrice(p, message.Currency)
+                        )
+                    ),
                     inline = true,
                 }
             );
@@ -116,10 +133,7 @@ public sealed class TelegramNotifier(
             text.AppendLine(Escape(message.Url));
         }
 
-        if (message.Price is decimal price)
-        {
-            text.AppendLine($"Price: {price} EUR");
-        }
+        NotificationContent.AppendMetadataLines(text, message);
 
         var payload = new
         {
@@ -175,11 +189,18 @@ public sealed class EmailNotifier(IOptions<DomolovOptions> options, ILogger<Emai
             client.Credentials = new System.Net.NetworkCredential(o.SmtpUser, o.SmtpPassword);
         }
 
+        var body = new StringBuilder().AppendLine(message.Body).AppendLine();
+        if (!string.IsNullOrWhiteSpace(message.Url))
+        {
+            body.AppendLine(message.Url);
+        }
+
+        NotificationContent.AppendMetadataLines(body, message);
+
         using var mail = new MailMessage(o.SmtpFrom, message.Destination)
         {
             Subject = $"[Domolov] {message.Title}",
-            Body =
-                $"{message.Body}\n\n{message.Url}\nPrice: {message.Price} {message.PreviousPrices}",
+            Body = body.ToString(),
             IsBodyHtml = false,
         };
 
@@ -222,7 +243,7 @@ public sealed class WebPushNotifier(
             new
             {
                 title = message.Title,
-                body = message.Body,
+                body = NotificationContent.BuildPushBody(message),
                 url = message.Url,
             }
         );

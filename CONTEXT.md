@@ -16,6 +16,14 @@ _Avoid_: Job run, crawl session (prefer ScanRun in persistence)
 A provider-scoped property advertisement identified by an external id.
 _Avoid_: Ad, property, result item
 
+**Location**:
+The place line on a Listing (neighborhood or area as shown by the provider).
+_Avoid_: Locality, address, area
+
+**LandSizeText**:
+Scraped land or plot size for a Listing, stored as free text like SizeText.
+_Avoid_: Plot size, land area, parcel size
+
 **PriceObservation**:
 A point-in-time price recorded for a Listing.
 _Avoid_: Price history entry, price point

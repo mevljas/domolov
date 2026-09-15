@@ -33,7 +33,16 @@ public sealed record NotificationMessage(
     string? Url,
     string? ImageUrl,
     decimal? Price,
-    IReadOnlyList<decimal>? PreviousPrices
+    IReadOnlyList<decimal>? PreviousPrices,
+    string? Currency = null,
+    string? Location = null,
+    string? PropertyType = null,
+    string? Rooms = null,
+    string? SizeText = null,
+    string? YearText = null,
+    string? FloorText = null,
+    string? LandSizeText = null,
+    string? Description = null
 );
 
 /// <summary>Options bound from environment / configuration.</summary>

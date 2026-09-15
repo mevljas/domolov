@@ -1,6 +1,8 @@
 @page "/bookmarks"
 @rendermode InteractiveServer
+@using Domolov.Application.Contracts
 @using Domolov.Application.Services
+@using Domolov.Components.Listings
 @inject IListingQueryService Listings
 @inject IStringLocalizer<SharedResources> L
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
@@ -19,22 +21,32 @@ else if (_items.Count == 0)
 }
 else
 {
-    <ul>
+    <div class="row g-3">
         @foreach (var item in _items)
         {
-            <li>
-                <a href="listings/@item.Id">@item.Title</a>
-                — @item.LatestPrice @item.Currency
-            </li>
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                <ListingSummaryCard Item="item" OnToggleBookmark="() => ToggleBookmarkAsync(item)" />
+            </div>
         }
-    </ul>
+    </div>
 }
 
 @code {
-    private IReadOnlyList<Domolov.Application.Contracts.ListingResponse>? _items;
+    private IReadOnlyList<ListingResponse>? _items;
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
         _items = await Listings.GetForWatchAsync(null, true);
+    }
+
+    private async Task ToggleBookmarkAsync(ListingResponse item)
+    {
+        await Listings.SetBookmarkAsync(item.Id, !item.IsBookmarked);
+        await ReloadAsync();
     }
 }

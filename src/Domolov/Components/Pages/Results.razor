@@ -1,5 +1,6 @@
 @page "/results"
 @rendermode InteractiveServer
+@using Domolov.Components.Listings
 @using Domolov.Application.Contracts
 @using Domolov.Application.Services
 @inject IListingQueryService Listings
@@ -49,19 +50,8 @@ else
     <div class="row g-3">
         @foreach (var item in _items)
         {
-            <div class="col-md-6">
-                <article>
-                    <h3><a href="listings/@item.Id">@item.Title</a></h3>
-                    @if (!string.IsNullOrEmpty(item.ImageUrl))
-                    {
-                        <img src="@item.ImageUrl" alt="" style="max-width:100%;height:auto" />
-                    }
-                    <p>@item.LatestPrice @item.Currency</p>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleBookmarkAsync(item)">
-                        @(item.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
-                    </button>
-                    <a class="btn btn-sm btn-link" href="@item.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a>
-                </article>
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                <ListingSummaryCard Item="item" OnToggleBookmark="() => ToggleBookmarkAsync(item)" />
             </div>
         }
     </div>

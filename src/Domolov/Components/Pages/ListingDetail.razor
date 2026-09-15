@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using Domolov.Application.Contracts
 @using Domolov.Application.Services
+@using Domolov.Domain.Services
 @inject IListingQueryService Listings
 @inject IJSRuntime Js
 @inject IStringLocalizer<SharedResources> L
@@ -15,24 +16,104 @@
 }
 else
 {
-    <h1>@_detail.Title</h1>
-    @if (!string.IsNullOrEmpty(_detail.ImageUrl))
-    {
-        <img src="@_detail.ImageUrl" alt="" style="max-width:480px;height:auto" />
-    }
-    <p>@_detail.Description</p>
-    <p><a href="@_detail.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a></p>
-    <button class="btn btn-outline-secondary" @onclick="ToggleBookmarkAsync">
-        @(_detail.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
-    </button>
+    <article class="listing-detail">
+        @if (!string.IsNullOrWhiteSpace(TypeRoomsLine))
+        {
+            <p class="listing-detail__type text-muted mb-1">@TypeRoomsLine</p>
+        }
+        <h1>@(_detail.Location ?? _detail.Title)</h1>
+        @if (!string.IsNullOrWhiteSpace(_detail.Location) &&
+             !string.Equals(_detail.Location, _detail.Title, StringComparison.Ordinal))
+        {
+            <p class="text-muted">@_detail.Title</p>
+        }
+        @if (LatestPrice is decimal price)
+        {
+            <p class="listing-detail__price">@PriceFormatting.Format(price, LatestCurrency)</p>
+        }
+        @if (AttributeParts.Count > 0)
+        {
+            <p class="listing-detail__attrs">@string.Join(" · ", AttributeParts)</p>
+        }
+        @if (!string.IsNullOrEmpty(_detail.ImageUrl))
+        {
+            <img class="listing-detail__image" src="@_detail.ImageUrl" alt="" />
+        }
+        @if (!string.IsNullOrWhiteSpace(_detail.Description))
+        {
+            <p class="listing-detail__desc">@_detail.Description</p>
+        }
+        <p><a href="@_detail.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a></p>
+        <button class="btn btn-outline-secondary" @onclick="ToggleBookmarkAsync">
+            @(_detail.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
+        </button>
 
-    <h2 class="mt-4">@L["PriceHistory"]</h2>
-    <canvas id="priceChart" width="600" height="280"></canvas>
+        <h2 class="mt-4">@L["PriceHistory"]</h2>
+        <canvas id="priceChart" width="600" height="280"></canvas>
+    </article>
 }
 
 @code {
     [Parameter] public Guid Id { get; set; }
     private ListingDetailResponse? _detail;
+
+    private decimal? LatestPrice =>
+        _detail?.Prices.Count > 0 ? _detail.Prices[^1].Amount : null;
+
+    private string LatestCurrency =>
+        _detail?.Prices.Count > 0 ? _detail.Prices[^1].Currency : "EUR";
+
+    private string? TypeRoomsLine
+    {
+        get
+        {
+            if (_detail is null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_detail.PropertyType) && !string.IsNullOrWhiteSpace(_detail.Rooms))
+            {
+                return $"{_detail.PropertyType}, {_detail.Rooms}";
+            }
+
+            return _detail.PropertyType ?? _detail.Rooms;
+        }
+    }
+
+    private IReadOnlyList<string> AttributeParts
+    {
+        get
+        {
+            if (_detail is null)
+            {
+                return [];
+            }
+
+            var parts = new List<string>(4);
+            if (!string.IsNullOrWhiteSpace(_detail.SizeText))
+            {
+                parts.Add(_detail.SizeText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_detail.YearText))
+            {
+                parts.Add(_detail.YearText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_detail.FloorText))
+            {
+                parts.Add(_detail.FloorText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_detail.LandSizeText))
+            {
+                parts.Add(_detail.LandSizeText);
+            }
+
+            return parts;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
