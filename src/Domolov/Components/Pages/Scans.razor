@@ -1,8 +1,12 @@
 @page "/scans"
+@rendermode InteractiveServer
+@using Domolov.Application.Contracts
 @using Domolov.Application.Services
+@using Domolov.Domain.Enums
+@using Domolov.Domain.Services
+@implements IAsyncDisposable
 @inject IScanRunQueryService ScanQuery
 @inject IStringLocalizer<SharedResources> L
-@attribute [StreamRendering]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>@L["NavScans"]</PageTitle>
@@ -31,7 +35,13 @@ else
             {
                 <tr>
                     <td>@r.WatchName</td>
-                    <td>@r.Status</td>
+                    <td>
+                        @FormatStatus(r)
+                        @if (r.CloudflareBlocked)
+                        {
+                            <span class="badge text-bg-warning ms-1">@L["CloudflareBadge"]</span>
+                        }
+                    </td>
                     <td>@r.QueuedAt</td>
                     <td>@r.NewCount</td>
                     <td>@r.PriceChangeCount</td>
@@ -43,10 +53,104 @@ else
 }
 
 @code {
-    private IReadOnlyList<Domolov.Application.Contracts.ScanRunResponse>? _runs;
+    private IReadOnlyList<ScanRunResponse>? _runs;
+    private CancellationTokenSource? _pollCts;
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAsync();
+        EnsurePolling();
+    }
+
+    private async Task ReloadAsync()
+    {
         _runs = await ScanQuery.GetRecentAsync();
+    }
+
+    private void EnsurePolling()
+    {
+        if (_pollCts is not null || !HasActive())
+        {
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _pollCts = cts;
+        _ = PollAsync(cts);
+    }
+
+    private async Task PollAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), cts.Token);
+                await InvokeAsync(async () =>
+                {
+                    await ReloadAsync();
+                    StateHasChanged();
+                });
+
+                if (!HasActive())
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // page disposed
+        }
+        finally
+        {
+            if (ReferenceEquals(_pollCts, cts))
+            {
+                _pollCts = null;
+            }
+
+            cts.Dispose();
+        }
+    }
+
+    private bool HasActive() =>
+        _runs?.Any(r => ScanRunProgress.IsActive(r.Status)) == true;
+
+    private string FormatStatus(ScanRunResponse run)
+    {
+        var label = StatusLabel(run.Status);
+        if (!ScanRunProgress.IsActive(run.Status))
+        {
+            return label;
+        }
+
+        var elapsed = ScanRunProgress.FormatElapsed(
+            ScanRunProgress.GetElapsed(
+                run.Status,
+                run.QueuedAt,
+                run.StartedAt,
+                DateTimeOffset.UtcNow
+            )
+        );
+        return string.Format(L["ScanStatusWithElapsed"], label, elapsed);
+    }
+
+    private string StatusLabel(ScanRunStatus status) =>
+        status switch
+        {
+            ScanRunStatus.Queued => L["ScanStatusQueued"],
+            ScanRunStatus.Running => L["ScanStatusRunning"],
+            ScanRunStatus.Baseline => L["ScanStatusBaseline"],
+            ScanRunStatus.Succeeded => L["ScanStatusSucceeded"],
+            ScanRunStatus.Failed => L["ScanStatusFailed"],
+            _ => status.ToString(),
+        };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_pollCts is { } cts)
+        {
+            await cts.CancelAsync();
+        }
     }
 }

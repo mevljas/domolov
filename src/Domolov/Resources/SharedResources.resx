@@ -49,6 +49,7 @@
   <data name="Error" xml:space="preserve"><value>Error</value></data>
   <data name="TimeZone" xml:space="preserve"><value>Time zone</value></data>
   <data name="MaxConcurrentScans" xml:space="preserve"><value>Max concurrent scans</value></data>
+  <data name="ScanCooldownMs" xml:space="preserve"><value>Scan cooldown (ms)</value></data>
   <data name="BrowserHeadless" xml:space="preserve"><value>Browser headless</value></data>
   <data name="Role" xml:space="preserve"><value>Role</value></data>
   <data name="Configured" xml:space="preserve"><value>Configured</value></data>
@@ -68,6 +69,9 @@
   <data name="ScheduleDays" xml:space="preserve"><value>Days</value></data>
   <data name="ScheduleTimezoneHint" xml:space="preserve"><value>Times use {0}.</value></data>
   <data name="SaveSchedule" xml:space="preserve"><value>Save schedule</value></data>
+  <data name="CloudflareBadge" xml:space="preserve"><value>Cloudflare</value></data>
+  <data name="CloudflareBlockedUntil" xml:space="preserve"><value>Cloudflare cooldown until {0:u}</value></data>
+  <data name="CloudflareStrikes" xml:space="preserve"><value>Recent Cloudflare strikes: {0}</value></data>
   <data name="DaySunday" xml:space="preserve"><value>Sun</value></data>
   <data name="DayMonday" xml:space="preserve"><value>Mon</value></data>
   <data name="DayTuesday" xml:space="preserve"><value>Tue</value></data>
@@ -75,4 +79,10 @@
   <data name="DayThursday" xml:space="preserve"><value>Thu</value></data>
   <data name="DayFriday" xml:space="preserve"><value>Fri</value></data>
   <data name="DaySaturday" xml:space="preserve"><value>Sat</value></data>
+  <data name="ScanStatusQueued" xml:space="preserve"><value>Queued</value></data>
+  <data name="ScanStatusRunning" xml:space="preserve"><value>Running</value></data>
+  <data name="ScanStatusBaseline" xml:space="preserve"><value>Baseline</value></data>
+  <data name="ScanStatusSucceeded" xml:space="preserve"><value>Succeeded</value></data>
+  <data name="ScanStatusFailed" xml:space="preserve"><value>Failed</value></data>
+  <data name="ScanStatusWithElapsed" xml:space="preserve"><value>{0} · {1}</value></data>
 </root>

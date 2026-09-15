@@ -322,7 +322,7 @@ api.MapPost(
                 return TypedResults.NotFound();
             }
 
-            var runId = await orchestrator.EnqueueAsync(id, ct);
+            var runId = await orchestrator.EnqueueAsync(id, ct, force: true);
             return TypedResults.Accepted($"/api/scans/{runId}", runId);
         }
     )

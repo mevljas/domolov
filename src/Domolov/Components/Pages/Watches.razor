@@ -6,8 +6,10 @@
 @using Domolov.Domain.Enums
 @using Domolov.Domain.Services
 @using Microsoft.Extensions.Options
+@implements IAsyncDisposable
 @inject IWatchService WatchService
 @inject IScanOrchestrator Orchestrator
+@inject IScanRunQueryService ScanQuery
 @inject IOptions<DomolovOptions> Options
 @inject IStringLocalizer<SharedResources> L
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
@@ -45,6 +47,20 @@ else
             <h3>@w.Name</h3>
             <p><a href="@w.SearchUrl" target="_blank" rel="noopener">@w.SearchUrl</a></p>
             <p>@L["Schedule"]: @SummarizeSchedule(w.Cron) | @L["Baseline"]: @(w.HasCompletedBaseline ? L["Yes"] : L["No"])</p>
+            @if (IsCloudflareCoolingDown(w))
+            {
+                <p class="text-warning mb-2">
+                    @string.Format(L["CloudflareBlockedUntil"], w.CloudflareBlockedUntil)
+                </p>
+            }
+            else if (w.CloudflareStrikeCount > 0)
+            {
+                <p class="text-muted mb-2">@string.Format(L["CloudflareStrikes"], w.CloudflareStrikeCount)</p>
+            }
+            @if (_active.TryGetValue(w.Id, out var activeRun))
+            {
+                <p class="text-muted mb-2">@FormatActiveStatus(activeRun)</p>
+            }
             <div class="mb-2" style="max-width: 28rem">
                 <WatchScheduleEditor
                     Cron="@GetEditCron(w.Id, w.Cron)"
@@ -55,7 +71,12 @@ else
                     @L["SaveSchedule"]
                 </button>
             </div>
-            <button class="btn btn-sm btn-secondary" @onclick="() => RunAsync(w.Id)">@L["RunNow"]</button>
+            <button
+                class="btn btn-sm btn-secondary"
+                disabled="@_active.ContainsKey(w.Id)"
+                @onclick="() => RunAsync(w.Id)">
+                @L["RunNow"]
+            </button>
             <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(w.Id)">@L["Delete"]</button>
 
             <h4 class="mt-3">@L["NotificationRoutes"]</h4>
@@ -87,10 +108,16 @@ else
     private CreateWatchRequest _create = NewCreateRequest();
     private RouteForm _route = new();
     private readonly Dictionary<Guid, string> _editCron = new();
+    private Dictionary<Guid, ScanRunResponse> _active = new();
+    private CancellationTokenSource? _pollCts;
 
     private string TimeZoneId => Options.Value.TimeZone;
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+        EnsurePolling();
+    }
 
     private async Task ReloadAsync()
     {
@@ -103,6 +130,60 @@ else
                 _editCron[w.Id] = w.Cron;
             }
         }
+
+        await ReloadActiveAsync();
+    }
+
+    private async Task ReloadActiveAsync()
+    {
+        var active = await ScanQuery.GetActiveAsync();
+        _active = active.ToDictionary(r => r.WatchId);
+    }
+
+    private void EnsurePolling()
+    {
+        if (_pollCts is not null || _active.Count == 0)
+        {
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _pollCts = cts;
+        _ = PollAsync(cts);
+    }
+
+    private async Task PollAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), cts.Token);
+                await InvokeAsync(async () =>
+                {
+                    await ReloadActiveAsync();
+                    StateHasChanged();
+                });
+
+                if (_active.Count == 0)
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // page disposed
+        }
+        finally
+        {
+            if (ReferenceEquals(_pollCts, cts))
+            {
+                _pollCts = null;
+            }
+
+            cts.Dispose();
+        }
     }
 
     private static CreateWatchRequest NewCreateRequest() =>
@@ -110,7 +191,7 @@ else
         {
             Name = "",
             SearchUrl = "https://www.nepremicnine.net/",
-            Cron = WatchCronSchedule.EveryHourCron,
+            Cron = WatchCronSchedule.Every6HoursCron,
         };
 
     private string GetEditCron(Guid id, string fallback) =>
@@ -149,7 +230,9 @@ else
 
     private async Task RunAsync(Guid id)
     {
-        await Orchestrator.EnqueueAsync(id);
+        await Orchestrator.EnqueueAsync(id, force: true);
+        await ReloadActiveAsync();
+        EnsurePolling();
     }
 
     private async Task AddRouteAsync(Guid watchId)
@@ -169,6 +252,28 @@ else
         await WatchService.DeleteRouteAsync(watchId, routeId);
         await ReloadAsync();
     }
+
+    private string FormatActiveStatus(ScanRunResponse run)
+    {
+        var label = run.Status switch
+        {
+            ScanRunStatus.Queued => L["ScanStatusQueued"],
+            ScanRunStatus.Running => L["ScanStatusRunning"],
+            _ => run.Status.ToString(),
+        };
+        var elapsed = ScanRunProgress.FormatElapsed(
+            ScanRunProgress.GetElapsed(
+                run.Status,
+                run.QueuedAt,
+                run.StartedAt,
+                DateTimeOffset.UtcNow
+            )
+        );
+        return string.Format(L["ScanStatusWithElapsed"], label, elapsed);
+    }
+
+    private static bool IsCloudflareCoolingDown(WatchResponse watch) =>
+        watch.CloudflareBlockedUntil is { } until && until > DateTimeOffset.UtcNow;
 
     private string SummarizeSchedule(string cron)
     {
@@ -203,6 +308,14 @@ else
             )
         );
         return $"{days} {model.Time:HH:mm}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_pollCts is { } cts)
+        {
+            await cts.CancelAsync();
+        }
     }
 
     private sealed class RouteForm

@@ -49,6 +49,7 @@
   <data name="Error" xml:space="preserve"><value>Napaka</value></data>
   <data name="TimeZone" xml:space="preserve"><value>Časovni pas</value></data>
   <data name="MaxConcurrentScans" xml:space="preserve"><value>Največ sočasnih skenov</value></data>
+  <data name="ScanCooldownMs" xml:space="preserve"><value>Premor med skeni (ms)</value></data>
   <data name="BrowserHeadless" xml:space="preserve"><value>Brezglavi brskalnik</value></data>
   <data name="Role" xml:space="preserve"><value>Vloga</value></data>
   <data name="Configured" xml:space="preserve"><value>Nastavljeno</value></data>
@@ -68,6 +69,9 @@
   <data name="ScheduleDays" xml:space="preserve"><value>Dnevi</value></data>
   <data name="ScheduleTimezoneHint" xml:space="preserve"><value>Časi uporabljajo {0}.</value></data>
   <data name="SaveSchedule" xml:space="preserve"><value>Shrani urnik</value></data>
+  <data name="CloudflareBadge" xml:space="preserve"><value>Cloudflare</value></data>
+  <data name="CloudflareBlockedUntil" xml:space="preserve"><value>Cloudflare premor do {0:u}</value></data>
+  <data name="CloudflareStrikes" xml:space="preserve"><value>Nedavni Cloudflare zadetki: {0}</value></data>
   <data name="DaySunday" xml:space="preserve"><value>Ned</value></data>
   <data name="DayMonday" xml:space="preserve"><value>Pon</value></data>
   <data name="DayTuesday" xml:space="preserve"><value>Tor</value></data>
@@ -75,4 +79,10 @@
   <data name="DayThursday" xml:space="preserve"><value>Čet</value></data>
   <data name="DayFriday" xml:space="preserve"><value>Pet</value></data>
   <data name="DaySaturday" xml:space="preserve"><value>Sob</value></data>
+  <data name="ScanStatusQueued" xml:space="preserve"><value>V čakalni vrsti</value></data>
+  <data name="ScanStatusRunning" xml:space="preserve"><value>V teku</value></data>
+  <data name="ScanStatusBaseline" xml:space="preserve"><value>Izhodišče</value></data>
+  <data name="ScanStatusSucceeded" xml:space="preserve"><value>Uspešno</value></data>
+  <data name="ScanStatusFailed" xml:space="preserve"><value>Neuspešno</value></data>
+  <data name="ScanStatusWithElapsed" xml:space="preserve"><value>{0} · {1}</value></data>
 </root>

@@ -36,15 +36,32 @@ public sealed class ScanOrchestrator : IScanOrchestrator
 
     public async Task<Guid> EnqueueAsync(
         Guid watchId,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken = default,
+        bool force = false
     )
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
-        _ =
+        var watch =
             await db.Watches.FirstOrDefaultAsync(w => w.Id == watchId, cancellationToken)
             ?? throw new KeyNotFoundException($"Watch {watchId} not found.");
+
+        var now = DateTimeOffset.UtcNow;
+        if (force)
+        {
+            CloudflareBackoff.Clear(watch);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (CloudflareBackoff.IsBlocked(watch, now))
+        {
+            _logger.LogInformation(
+                "Skipping enqueue for Watch {WatchId}; Cloudflare blocked until {Until}",
+                watchId,
+                watch.CloudflareBlockedUntil
+            );
+            return Guid.Empty;
+        }
 
         var existing = await db
             .ScanRuns.Where(r =>
@@ -74,7 +91,7 @@ public sealed class ScanOrchestrator : IScanOrchestrator
             queuedIds = await db
                 .ScanRuns.Where(r => r.Status == ScanRunStatus.Queued)
                 .OrderBy(r => r.QueuedAt)
-                .Take(_options.Value.MaxConcurrentScans * 2)
+                .Take(Math.Max(1, _options.Value.MaxConcurrentScans) * 2)
                 .Select(r => r.Id)
                 .ToListAsync(cancellationToken);
         }
@@ -120,11 +137,36 @@ public sealed class ScanOrchestrator : IScanOrchestrator
                 run.Status = ScanRunStatus.Failed;
                 run.ErrorSummary = ex.Message;
                 run.FinishedAt = DateTimeOffset.UtcNow;
+                if (ex is CloudflareBlockedException)
+                {
+                    run.CloudflareBlocked = true;
+                    CloudflareBackoff.ApplyStrike(run.Watch, DateTimeOffset.UtcNow);
+                    _logger.LogWarning(
+                        "Watch {WatchId} Cloudflare strike {Strike}; blocked until {Until}",
+                        run.Watch.Id,
+                        run.Watch.CloudflareStrikeCount,
+                        run.Watch.CloudflareBlockedUntil
+                    );
+                }
+
                 await db.SaveChangesAsync(cancellationToken);
             }
         }
         finally
         {
+            var cooldownMs = Math.Max(0, _options.Value.ScanCooldownMs);
+            if (cooldownMs > 0)
+            {
+                try
+                {
+                    await Task.Delay(cooldownMs, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // shutting down
+                }
+            }
+
             _gate.Release();
         }
     }
@@ -262,6 +304,7 @@ public sealed class ScanOrchestrator : IScanOrchestrator
         );
         run.FinishedAt = DateTimeOffset.UtcNow;
         watch.LastScannedAt = run.FinishedAt;
+        CloudflareBackoff.Clear(watch);
 
         if (isBaseline)
         {

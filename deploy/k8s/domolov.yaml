@@ -10,7 +10,8 @@ metadata:
   namespace: domolov
 data:
   DOMOLOV_TIMEZONE: Europe/Ljubljana
-  DOMOLOV_MAX_CONCURRENT_SCANS: "2"
+  DOMOLOV_MAX_CONCURRENT_SCANS: "1"
+  DOMOLOV_SCAN_COOLDOWN_MS: "20000"
   DOMOLOV_BROWSER_HEADLESS: "false"
   DOMOLOV_BROWSER_USER_DATA_DIR: /data/browser-profile
   DOMOLOV_DATA_PROTECTION_KEYS_DIR: /data/data-protection-keys

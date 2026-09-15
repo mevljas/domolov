@@ -65,10 +65,10 @@
     private WatchCronModel _model = new();
     private HashSet<DayOfWeek> _selectedDays = new(WatchCronModel.AllDays);
     private string _timeValue = "09:00";
-    private string _lastCron = WatchCronSchedule.EveryHourCron;
+    private string _lastCron = WatchCronSchedule.Every6HoursCron;
 
     [Parameter]
-    public string Cron { get; set; } = WatchCronSchedule.EveryHourCron;
+    public string Cron { get; set; } = WatchCronSchedule.Every6HoursCron;
 
     [Parameter]
     public EventCallback<string> CronChanged { get; set; }

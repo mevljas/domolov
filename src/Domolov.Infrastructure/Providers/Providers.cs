@@ -322,22 +322,23 @@ public sealed class NepremicnineProvider(
         }
 
         decimal? price = null;
-        var priceMeta = card.Locator("meta[itemprop='price']").First;
-        if (await priceMeta.CountAsync() > 0)
+        var priceLoc = card.Locator(".price, [class*='price']").First;
+        if (await priceLoc.CountAsync() > 0)
         {
-            var content = await priceMeta.GetAttributeAsync("content");
-            if (NepremicnineParsing.TryParsePrice(content, out var amount))
+            var priceText = await priceLoc.InnerTextAsync();
+            if (NepremicnineParsing.TryParsePrice(priceText, out var amount))
             {
                 price = amount;
             }
         }
-        else
+
+        if (price is null)
         {
-            var priceLoc = card.Locator(".price, [class*='price']").First;
-            if (await priceLoc.CountAsync() > 0)
+            var priceMeta = card.Locator("meta[itemprop='price']").First;
+            if (await priceMeta.CountAsync() > 0)
             {
-                var priceText = await priceLoc.InnerTextAsync();
-                if (NepremicnineParsing.TryParsePrice(priceText, out var amount))
+                var content = await priceMeta.GetAttributeAsync("content");
+                if (NepremicnineParsing.TryParsePrice(content, out var amount))
                 {
                     price = amount;
                 }

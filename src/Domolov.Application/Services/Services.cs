@@ -174,7 +174,9 @@ public sealed class WatchService(IAppDbContext db, IListingProviderResolver prov
 
     private static string NormalizeCron(string? cron)
     {
-        var value = string.IsNullOrWhiteSpace(cron) ? WatchCronSchedule.EveryHourCron : cron.Trim();
+        var value = string.IsNullOrWhiteSpace(cron)
+            ? WatchCronSchedule.Every6HoursCron
+            : cron.Trim();
         if (!WatchCronSchedule.TryValidate(value, out var error))
         {
             throw new ArgumentException(
@@ -199,6 +201,8 @@ public sealed class WatchService(IAppDbContext db, IListingProviderResolver prov
             watch.HasCompletedBaseline,
             watch.CreatedAt,
             watch.LastScannedAt,
+            watch.CloudflareStrikeCount,
+            watch.CloudflareBlockedUntil,
             watch
                 .NotificationRoutes.OrderBy(r => r.Channel)
                 .Select(r => new NotificationRouteResponse(
@@ -380,6 +384,10 @@ public interface IScanRunQueryService
         int take = 100,
         CancellationToken cancellationToken = default
     );
+
+    Task<IReadOnlyList<ScanRunResponse>> GetActiveAsync(
+        CancellationToken cancellationToken = default
+    );
 }
 
 /// <summary>Scan history query implementation.</summary>
@@ -397,7 +405,25 @@ public sealed class ScanRunQueryService(IAppDbContext db) : IScanRunQueryService
             .Take(take)
             .ToListAsync(cancellationToken);
 
-        return runs.Select(r => new ScanRunResponse(
+        return Map(runs);
+    }
+
+    public async Task<IReadOnlyList<ScanRunResponse>> GetActiveAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        var runs = await db
+            .ScanRuns.AsNoTracking()
+            .Include(r => r.Watch)
+            .Where(r => r.Status == ScanRunStatus.Queued || r.Status == ScanRunStatus.Running)
+            .OrderBy(r => r.QueuedAt)
+            .ToListAsync(cancellationToken);
+
+        return Map(runs);
+    }
+
+    private static IReadOnlyList<ScanRunResponse> Map(IEnumerable<ScanRun> runs) =>
+        runs.Select(r => new ScanRunResponse(
                 r.Id,
                 r.WatchId,
                 r.Watch?.Name ?? "",
@@ -409,10 +435,10 @@ public sealed class ScanRunQueryService(IAppDbContext db) : IScanRunQueryService
                 r.NewCount,
                 r.PriceChangeCount,
                 r.ErrorSummary,
-                r.NotifyErrorSummary
+                r.NotifyErrorSummary,
+                r.CloudflareBlocked
             ))
             .ToList();
-    }
 }
 
 /// <summary>Settings projection from options.</summary>
@@ -430,6 +456,7 @@ public sealed class SettingsService(IOptions<DomolovOptions> options) : ISetting
         return new SettingsResponse(
             o.TimeZone,
             o.MaxConcurrentScans,
+            o.ScanCooldownMs,
             o.BrowserHeadless,
             !string.IsNullOrWhiteSpace(o.TelegramBotToken),
             !string.IsNullOrWhiteSpace(o.SmtpHost),

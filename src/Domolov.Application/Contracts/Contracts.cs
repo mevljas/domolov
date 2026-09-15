@@ -13,7 +13,7 @@ public sealed class CreateWatchRequest
     public string SearchUrl { get; set; } = "";
 
     [MaxLength(100)]
-    public string Cron { get; set; } = "0 * * * *";
+    public string Cron { get; set; } = "0 */6 * * *";
 
     public bool IsEnabled { get; set; } = true;
 }
@@ -28,7 +28,7 @@ public sealed class UpdateWatchRequest
     public string SearchUrl { get; set; } = "";
 
     [MaxLength(100)]
-    public string Cron { get; set; } = "0 * * * *";
+    public string Cron { get; set; } = "0 */6 * * *";
 
     public bool IsEnabled { get; set; } = true;
 }
@@ -44,6 +44,8 @@ public sealed record WatchResponse(
     bool HasCompletedBaseline,
     DateTimeOffset CreatedAt,
     DateTimeOffset? LastScannedAt,
+    int CloudflareStrikeCount,
+    DateTimeOffset? CloudflareBlockedUntil,
     IReadOnlyList<NotificationRouteResponse> Routes
 );
 
@@ -132,13 +134,15 @@ public sealed record ScanRunResponse(
     int NewCount,
     int PriceChangeCount,
     string? ErrorSummary,
-    string? NotifyErrorSummary
+    string? NotifyErrorSummary,
+    bool CloudflareBlocked
 );
 
 /// <summary>Settings capability flags.</summary>
 public sealed record SettingsResponse(
     string TimeZone,
     int MaxConcurrentScans,
+    int ScanCooldownMs,
     bool BrowserHeadless,
     bool TelegramConfigured,
     bool SmtpConfigured,

@@ -78,6 +78,17 @@ public static class DependencyInjection
             }
 
             if (
+                int.TryParse(
+                    configuration["DOMOLOV_SCAN_COOLDOWN_MS"]
+                        ?? configuration["Domolov:ScanCooldownMs"],
+                    out var cooldown
+                )
+            )
+            {
+                o.ScanCooldownMs = Math.Max(0, cooldown);
+            }
+
+            if (
                 bool.TryParse(
                     configuration["DOMOLOV_BROWSER_HEADLESS"]
                         ?? configuration["Domolov:BrowserHeadless"],

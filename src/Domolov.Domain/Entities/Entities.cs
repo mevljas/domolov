@@ -9,11 +9,13 @@ public sealed class Watch
     public required string Name { get; set; }
     public required string ProviderId { get; set; }
     public required string SearchUrl { get; set; }
-    public string Cron { get; set; } = "0 * * * *";
+    public string Cron { get; set; } = "0 */6 * * *";
     public bool IsEnabled { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastScannedAt { get; set; }
     public bool HasCompletedBaseline { get; set; }
+    public int CloudflareStrikeCount { get; set; }
+    public DateTimeOffset? CloudflareBlockedUntil { get; set; }
 
     public ICollection<NotificationRoute> NotificationRoutes { get; set; } =
         new List<NotificationRoute>();
@@ -36,6 +38,7 @@ public sealed class ScanRun
     public int PriceChangeCount { get; set; }
     public string? ErrorSummary { get; set; }
     public string? NotifyErrorSummary { get; set; }
+    public bool CloudflareBlocked { get; set; }
 }
 
 /// <summary>Provider-scoped property advertisement.</summary>

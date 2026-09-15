@@ -32,7 +32,7 @@ public sealed class ApplicationServicesTests
             }
         );
         created.Name.Should().Be("Alpha");
-        created.Cron.Should().Be("0 * * * *");
+        created.Cron.Should().Be("0 */6 * * *");
         created.ProviderId.Should().Be(NepremicnineParsing.ProviderId);
 
         var emptyCron = await watches.CreateAsync(
@@ -318,6 +318,55 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
+    public async Task ScanRunQueryService_returns_active_runs_only()
+    {
+        await using var root = BuildHost();
+        await using var scope = root.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var scans = scope.ServiceProvider.GetRequiredService<IScanRunQueryService>();
+
+        var watch = new Watch
+        {
+            Name = "Watch B",
+            ProviderId = "nepremicnine",
+            SearchUrl = "https://www.nepremicnine.net/z/",
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        db.ScanRuns.Add(
+            new ScanRun
+            {
+                WatchId = watch.Id,
+                Status = ScanRunStatus.Succeeded,
+                QueuedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+            }
+        );
+        db.ScanRuns.Add(
+            new ScanRun
+            {
+                WatchId = watch.Id,
+                Status = ScanRunStatus.Queued,
+                QueuedAt = DateTimeOffset.UtcNow.AddMinutes(-2),
+            }
+        );
+        db.ScanRuns.Add(
+            new ScanRun
+            {
+                WatchId = watch.Id,
+                Status = ScanRunStatus.Running,
+                QueuedAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+                StartedAt = DateTimeOffset.UtcNow.AddSeconds(-30),
+            }
+        );
+        await db.SaveChangesAsync();
+
+        var active = await scans.GetActiveAsync();
+        active.Should().HaveCount(2);
+        active.Select(r => r.Status).Should().Equal(ScanRunStatus.Queued, ScanRunStatus.Running);
+    }
+
+    [Fact]
     public void SettingsService_reports_capability_flags()
     {
         var empty = new SettingsService(Options.Create(new DomolovOptions()));
@@ -326,7 +375,8 @@ public sealed class ApplicationServicesTests
         s.SmtpConfigured.Should().BeFalse();
         s.VapidConfigured.Should().BeFalse();
         s.TimeZone.Should().Be("Europe/Ljubljana");
-        s.MaxConcurrentScans.Should().Be(2);
+        s.MaxConcurrentScans.Should().Be(1);
+        s.ScanCooldownMs.Should().Be(20_000);
 
         var full = new SettingsService(
             Options.Create(
@@ -338,6 +388,7 @@ public sealed class ApplicationServicesTests
                     VapidPrivateKey = "priv",
                     Role = "worker",
                     MaxConcurrentScans = 4,
+                    ScanCooldownMs = 5_000,
                     BrowserHeadless = true,
                     TimeZone = "UTC",
                 }
@@ -350,6 +401,7 @@ public sealed class ApplicationServicesTests
         f.VapidPublicKey.Should().Be("pub");
         f.Role.Should().Be("worker");
         f.MaxConcurrentScans.Should().Be(4);
+        f.ScanCooldownMs.Should().Be(5_000);
         f.BrowserHeadless.Should().BeTrue();
         f.TimeZone.Should().Be("UTC");
     }

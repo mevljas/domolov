@@ -278,6 +278,92 @@ public sealed class ScanOrchestratorTests
         var run = await db.ScanRuns.AsNoTracking().SingleAsync(r => r.Id == runId);
         run.Status.Should().Be(ScanRunStatus.Failed);
         run.ErrorSummary.Should().Contain("cloudflare");
+        run.CloudflareBlocked.Should().BeTrue();
+
+        var updated = await db.Watches.AsNoTracking().SingleAsync(w => w.Id == watch.Id);
+        updated.CloudflareStrikeCount.Should().Be(1);
+        updated.CloudflareBlockedUntil.Should().NotBeNull();
+        updated.CloudflareBlockedUntil!.Value.Should().BeAfter(DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public async Task Cloudflare_backoff_skips_enqueue_until_force()
+    {
+        await using var root = BuildProvider(new ThrowingListingProvider());
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+        var watch = new Watch
+        {
+            Name = "t",
+            ProviderId = "fake",
+            SearchUrl = "https://example.com/search",
+            HasCompletedBaseline = true,
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        var failedId = await orchestrator.EnqueueAsync(watch.Id);
+        await orchestrator.ProcessQueuedAsync();
+        failedId.Should().NotBe(Guid.Empty);
+
+        var skipped = await orchestrator.EnqueueAsync(watch.Id);
+        skipped.Should().Be(Guid.Empty);
+        (await db.ScanRuns.CountAsync()).Should().Be(1);
+
+        var forced = await orchestrator.EnqueueAsync(watch.Id, force: true);
+        forced.Should().NotBe(Guid.Empty);
+        (await db.ScanRuns.CountAsync()).Should().Be(2);
+
+        var cleared = await db.Watches.AsNoTracking().SingleAsync(w => w.Id == watch.Id);
+        cleared.CloudflareStrikeCount.Should().Be(0);
+        cleared.CloudflareBlockedUntil.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Successful_scan_clears_cloudflare_backoff()
+    {
+        var cards = new List<ListingCard>
+        {
+            new(
+                "1",
+                "https://example.com/1/",
+                "A",
+                100,
+                "EUR",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            ),
+        };
+        await using var root = BuildProvider(new FakeListingProvider(cards));
+        await using var scope = root.CreateAsyncScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IScanOrchestrator>();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+        var watch = new Watch
+        {
+            Name = "t",
+            ProviderId = "fake",
+            SearchUrl = "https://example.com/search",
+            HasCompletedBaseline = true,
+            CloudflareStrikeCount = 2,
+            CloudflareBlockedUntil = DateTimeOffset.UtcNow.AddHours(-1),
+        };
+        db.Watches.Add(watch);
+        await db.SaveChangesAsync();
+
+        await orchestrator.EnqueueAsync(watch.Id);
+        await orchestrator.ProcessQueuedAsync();
+
+        var updated = await db.Watches.AsNoTracking().SingleAsync(w => w.Id == watch.Id);
+        updated.CloudflareStrikeCount.Should().Be(0);
+        updated.CloudflareBlockedUntil.Should().BeNull();
     }
 
     [Fact]
@@ -361,7 +447,9 @@ public sealed class ScanOrchestratorTests
         services.AddLogging();
         services.AddDbContext<DomolovDbContext>(o => o.UseInMemoryDatabase(dbName));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<DomolovDbContext>());
-        services.AddSingleton(Options.Create(new DomolovOptions { MaxConcurrentScans = 2 }));
+        services.AddSingleton(
+            Options.Create(new DomolovOptions { MaxConcurrentScans = 2, ScanCooldownMs = 0 })
+        );
         services.AddSingleton(listingProvider);
         services.AddSingleton<IListingProviderResolver, ListingProviderResolverStub>();
         services.AddSingleton<INotifier, FakeNotifier>();

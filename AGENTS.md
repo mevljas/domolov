@@ -43,7 +43,7 @@ CI and `CSharpierFormatTests` both fail on format drift. Do not push unformatted
 
 ## Don'ts
 
-- No hardcoded scrape delays — wait on Playwright DOM/network events.
+- Prefer Playwright DOM/network event waits for page readiness. Bounded pacing (short page jitter and inter-scan cooldown) is allowed only to reduce Cloudflare hit rate — not as a substitute for waiting on real page signals.
 - Do not rewrite pasted Watch URLs for language; English and Slovenian are different URLs.
 - Do not call Discord bot gateway; use incoming webhooks.
 - Do not add CAPTCHA solvers or proxy rotation in v1.

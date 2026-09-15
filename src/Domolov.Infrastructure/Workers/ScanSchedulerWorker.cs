@@ -47,6 +47,11 @@ public sealed class ScanSchedulerWorker(
 
                 foreach (var watch in watches)
                 {
+                    if (CloudflareBackoff.IsBlocked(watch, now))
+                    {
+                        continue;
+                    }
+
                     if (WatchSchedule.IsDue(watch.Cron, watch.LastScannedAt, now, tz))
                     {
                         await orchestrator.EnqueueAsync(watch.Id, stoppingToken);

@@ -52,7 +52,8 @@ public sealed class DomolovOptions
 
     public string AdminPassword { get; set; } = "";
     public string TimeZone { get; set; } = "Europe/Ljubljana";
-    public int MaxConcurrentScans { get; set; } = 2;
+    public int MaxConcurrentScans { get; set; } = 1;
+    public int ScanCooldownMs { get; set; } = 20_000;
     public bool BrowserHeadless { get; set; }
     public string BrowserUserDataDir { get; set; } = "browser-profile";
     public string Role { get; set; } = "all";
@@ -70,7 +71,17 @@ public sealed class DomolovOptions
 /// <summary>Queues and executes Watch scans.</summary>
 public interface IScanOrchestrator
 {
-    Task<Guid> EnqueueAsync(Guid watchId, CancellationToken cancellationToken = default);
+    /// <summary>Queues a ScanRun for the Watch.</summary>
+    /// <param name="watchId">Watch to scan.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="force">
+    /// When true, clears Cloudflare backoff on the Watch and enqueues anyway (Run now).
+    /// </param>
+    Task<Guid> EnqueueAsync(
+        Guid watchId,
+        CancellationToken cancellationToken = default,
+        bool force = false
+    );
     Task ProcessQueuedAsync(CancellationToken cancellationToken = default);
 }
 

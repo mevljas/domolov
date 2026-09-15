@@ -15,7 +15,7 @@ public enum WatchCronMode
 /// <summary>UI-friendly schedule model backed by a 5-field cron expression.</summary>
 public sealed class WatchCronModel
 {
-    public WatchCronMode Mode { get; init; } = WatchCronMode.EveryHour;
+    public WatchCronMode Mode { get; init; } = WatchCronMode.Every6Hours;
 
     /// <summary>Local time-of-day for <see cref="WatchCronMode.Weekly"/>.</summary>
     public TimeOnly Time { get; init; } = new(9, 0);
@@ -53,14 +53,14 @@ public static class WatchCronSchedule
             WatchCronMode.Every12Hours => Every12HoursCron,
             WatchCronMode.Weekly => ComposeWeekly(model.Time, model.Days),
             WatchCronMode.Custom => string.IsNullOrWhiteSpace(model.CustomCron)
-                ? EveryHourCron
+                ? Every6HoursCron
                 : model.CustomCron.Trim(),
-            _ => EveryHourCron,
+            _ => Every6HoursCron,
         };
 
     public static WatchCronModel Parse(string? cron)
     {
-        var trimmed = string.IsNullOrWhiteSpace(cron) ? EveryHourCron : cron.Trim();
+        var trimmed = string.IsNullOrWhiteSpace(cron) ? Every6HoursCron : cron.Trim();
 
         if (trimmed == EveryHourCron)
         {

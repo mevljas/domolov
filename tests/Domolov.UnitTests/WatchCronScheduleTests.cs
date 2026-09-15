@@ -91,10 +91,10 @@ public sealed class WatchCronScheduleTests
     }
 
     [Fact]
-    public void Empty_cron_defaults_to_every_hour()
+    public void Empty_cron_defaults_to_every_6_hours()
     {
-        WatchCronSchedule.Parse("").Mode.Should().Be(WatchCronMode.EveryHour);
-        WatchCronSchedule.Parse(null).Mode.Should().Be(WatchCronMode.EveryHour);
+        WatchCronSchedule.Parse("").Mode.Should().Be(WatchCronMode.Every6Hours);
+        WatchCronSchedule.Parse(null).Mode.Should().Be(WatchCronMode.Every6Hours);
     }
 
     [Fact]

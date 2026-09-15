@@ -50,7 +50,8 @@ Example env:
 ConnectionStrings__Default=Host=localhost;Port=5432;Database=domolov;Username=domolov;Password=domolov
 DOMOLOV_ADMIN_PASSWORD=changeme
 DOMOLOV_TIMEZONE=Europe/Ljubljana
-DOMOLOV_MAX_CONCURRENT_SCANS=2
+DOMOLOV_MAX_CONCURRENT_SCANS=1
+DOMOLOV_SCAN_COOLDOWN_MS=20000
 DOMOLOV_BROWSER_HEADLESS=true
 DOMOLOV_LOG_LEVEL=Information
 ```
@@ -62,7 +63,8 @@ DOMOLOV_LOG_LEVEL=Information
 | `DOMOLOV_ADMIN_PASSWORD` | Cookie-auth password for the operator | required |
 | `ConnectionStrings__Default` | PostgreSQL connection string | required |
 | `DOMOLOV_TIMEZONE` | IANA timezone for cron | `Europe/Ljubljana` |
-| `DOMOLOV_MAX_CONCURRENT_SCANS` | Parallel Playwright scans | `2` |
+| `DOMOLOV_MAX_CONCURRENT_SCANS` | Parallel Playwright scans | `1` |
+| `DOMOLOV_SCAN_COOLDOWN_MS` | Delay after each ScanRun before the next can start (CF pacing) | `20000` |
 | `DOMOLOV_BROWSER_HEADLESS` | Headless Chromium (local debug) | `false` in prod images |
 | `DOMOLOV_BROWSER_USER_DATA_DIR` | Persistent browser profile path | `/data/browser-profile` |
 
