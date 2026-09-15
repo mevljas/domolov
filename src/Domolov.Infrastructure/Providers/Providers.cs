@@ -82,7 +82,7 @@ public sealed class PlaywrightBrowserHost(
             Headless = options.Value.BrowserHeadless,
             Locale = "sl-SI",
             UserAgent =
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
             Args = ["--disable-blink-features=AutomationControlled"],
             ViewportSize = new ViewportSize { Width = 1365, Height = 900 },
         };
@@ -155,6 +155,13 @@ public sealed class NepremicnineProvider(
     ILogger<NepremicnineProvider> logger
 ) : IListingProvider
 {
+    private const int PageJitterMinMs = 1_000;
+    private const int PageJitterMaxMsExclusive = 3_001;
+    private const string OriginUrl = "https://www.nepremicnine.net/";
+
+    private readonly SemaphoreSlim _warmLock = new(1, 1);
+    private bool _originWarmedUp;
+
     public string Id => NepremicnineParsing.ProviderId;
 
     public bool CanHandle(Uri searchUrl) => NepremicnineParsing.IsNepremicnineHost(searchUrl);
@@ -165,6 +172,7 @@ public sealed class NepremicnineProvider(
     )
     {
         var context = await browserHost.GetContextAsync(cancellationToken);
+        await EnsureOriginWarmedUpAsync(context, cancellationToken);
         var page = await context.NewPageAsync();
         try
         {
@@ -175,6 +183,12 @@ public sealed class NepremicnineProvider(
             while (CrawlPagination.ShouldFetchPage(pageIndex, emptyPages))
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                if (pageIndex > 1)
+                {
+                    var jitter = Random.Shared.Next(PageJitterMinMs, PageJitterMaxMsExclusive);
+                    await Task.Delay(jitter, cancellationToken);
+                }
+
                 var url = NepremicnineParsing.BuildPageUrl(request.SearchUrl, pageIndex);
                 logger.LogInformation("Crawling {Url} (scan {ScanId})", url, request.ScanRunId);
 
@@ -258,6 +272,54 @@ public sealed class NepremicnineProvider(
         finally
         {
             await page.CloseAsync();
+        }
+    }
+
+    private async Task EnsureOriginWarmedUpAsync(
+        IBrowserContext context,
+        CancellationToken cancellationToken
+    )
+    {
+        if (_originWarmedUp)
+        {
+            return;
+        }
+
+        await _warmLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_originWarmedUp)
+            {
+                return;
+            }
+
+            logger.LogInformation("Warming browser session at {Origin}", OriginUrl);
+            var page = await context.NewPageAsync();
+            try
+            {
+                await page.GotoAsync(
+                    OriginUrl,
+                    new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded }
+                );
+                await DismissCookiesAsync(page);
+                var html = await page.ContentAsync();
+                if (NepremicnineParsing.LooksLikeCloudflareChallenge(html))
+                {
+                    throw new CloudflareBlockedException(
+                        $"Cloudflare challenge detected while warming {OriginUrl}"
+                    );
+                }
+            }
+            finally
+            {
+                await page.CloseAsync();
+            }
+
+            _originWarmedUp = true;
+        }
+        finally
+        {
+            _warmLock.Release();
         }
     }
 
