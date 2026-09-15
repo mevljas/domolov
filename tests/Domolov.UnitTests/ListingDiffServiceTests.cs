@@ -92,11 +92,17 @@ public sealed class NepremicnineParsingTests
             .BeFalse();
     }
 
-    [Fact]
-    public void TryParsePrice_handles_european_formats()
+    [Theory]
+    [InlineData("280.000,00 €", 280000)]
+    [InlineData("250.000,00 €", 250000)]
+    [InlineData("280000.00", 280000)]
+    [InlineData("280.000", 280000)]
+    [InlineData("210000", 210000)]
+    [InlineData("1.200 EUR", 1200)]
+    public void TryParsePrice_handles_european_and_schema_formats(string raw, double expected)
     {
-        NepremicnineParsing.TryParsePrice("250.000,00 €", out var amount).Should().BeTrue();
-        amount.Should().Be(250000.00m);
+        NepremicnineParsing.TryParsePrice(raw, out var amount).Should().BeTrue();
+        amount.Should().Be((decimal)expected);
     }
 
     [Fact]

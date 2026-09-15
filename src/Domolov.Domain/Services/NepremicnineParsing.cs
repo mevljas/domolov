@@ -70,9 +70,34 @@ public static partial class NepremicnineParsing
         var cleaned = raw.Replace("€", "", StringComparison.Ordinal)
             .Replace("EUR", "", StringComparison.OrdinalIgnoreCase)
             .Replace(" ", "", StringComparison.Ordinal)
-            .Replace(".", "", StringComparison.Ordinal)
-            .Replace(',', '.')
             .Trim();
+
+        var hasDot = cleaned.Contains('.', StringComparison.Ordinal);
+        var hasComma = cleaned.Contains(',', StringComparison.Ordinal);
+
+        if (hasDot && hasComma)
+        {
+            // Slovenian: 280.000,00
+            cleaned = cleaned.Replace(".", "", StringComparison.Ordinal).Replace(',', '.');
+        }
+        else if (hasComma)
+        {
+            cleaned = cleaned.Replace(',', '.');
+        }
+        else if (hasDot)
+        {
+            var lastDot = cleaned.LastIndexOf('.');
+            var digitsAfter = cleaned.Length - lastDot - 1;
+            if (digitsAfter is 1 or 2)
+            {
+                // Schema / invariant decimal: 280000.00
+            }
+            else
+            {
+                // Thousand separators only: 280.000
+                cleaned = cleaned.Replace(".", "", StringComparison.Ordinal);
+            }
+        }
 
         return decimal.TryParse(
             cleaned,
