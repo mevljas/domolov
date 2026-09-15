@@ -89,6 +89,17 @@ public static class DependencyInjection
             }
 
             if (
+                int.TryParse(
+                    configuration["DOMOLOV_CLOUDFLARE_CHALLENGE_WAIT_MS"]
+                        ?? configuration["Domolov:CloudflareChallengeWaitMs"],
+                    out var challengeWait
+                )
+            )
+            {
+                o.CloudflareChallengeWaitMs = Math.Max(0, challengeWait);
+            }
+
+            if (
                 bool.TryParse(
                     configuration["DOMOLOV_BROWSER_HEADLESS"]
                         ?? configuration["Domolov:BrowserHeadless"],

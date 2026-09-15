@@ -50,6 +50,7 @@
   <data name="TimeZone" xml:space="preserve"><value>Časovni pas</value></data>
   <data name="MaxConcurrentScans" xml:space="preserve"><value>Največ sočasnih skenov</value></data>
   <data name="ScanCooldownMs" xml:space="preserve"><value>Premor med skeni (ms)</value></data>
+  <data name="CloudflareChallengeWaitMs" xml:space="preserve"><value>Čakanje na Cloudflare izziv (ms)</value></data>
   <data name="BrowserHeadless" xml:space="preserve"><value>Brezglavi brskalnik</value></data>
   <data name="Role" xml:space="preserve"><value>Vloga</value></data>
   <data name="Configured" xml:space="preserve"><value>Nastavljeno</value></data>

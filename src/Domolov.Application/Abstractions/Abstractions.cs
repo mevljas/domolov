@@ -54,6 +54,7 @@ public sealed class DomolovOptions
     public string TimeZone { get; set; } = "Europe/Ljubljana";
     public int MaxConcurrentScans { get; set; } = 1;
     public int ScanCooldownMs { get; set; } = 20_000;
+    public int CloudflareChallengeWaitMs { get; set; } = 30_000;
     public bool BrowserHeadless { get; set; }
     public string BrowserUserDataDir { get; set; } = "browser-profile";
     public string Role { get; set; } = "all";

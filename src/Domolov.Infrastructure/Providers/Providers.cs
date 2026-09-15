@@ -32,6 +32,13 @@ public sealed class PlaywrightBrowserHost(
     ILogger<PlaywrightBrowserHost> logger
 ) : IAsyncDisposable
 {
+    // Keep major in sync with Microsoft.Playwright package Chromium (1.55 → 140).
+    private const string LinuxChromeUserAgent =
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
+
+    private const string HideWebdriverInitScript =
+        "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });";
+
     private readonly SemaphoreSlim _lock = new(1, 1);
     private IPlaywright? _playwright;
     private IBrowserContext? _context;
@@ -67,6 +74,7 @@ public sealed class PlaywrightBrowserHost(
             );
 
             _context = await LaunchPersistentAsync(userDataDir);
+            await _context.AddInitScriptAsync(HideWebdriverInitScript);
             return _context;
         }
         finally
@@ -81,8 +89,7 @@ public sealed class PlaywrightBrowserHost(
         {
             Headless = options.Value.BrowserHeadless,
             Locale = "sl-SI",
-            UserAgent =
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            UserAgent = LinuxChromeUserAgent,
             Args = ["--disable-blink-features=AutomationControlled"],
             ViewportSize = new ViewportSize { Width = 1365, Height = 900 },
         };
@@ -152,6 +159,7 @@ public sealed class PlaywrightBrowserHost(
 /// <summary>Nepremicnine.net listing provider using Playwright.</summary>
 public sealed class NepremicnineProvider(
     PlaywrightBrowserHost browserHost,
+    IOptions<DomolovOptions> options,
     ILogger<NepremicnineProvider> logger
 ) : IListingProvider
 {
@@ -197,13 +205,12 @@ public sealed class NepremicnineProvider(
                     new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded }
                 );
 
-                var html = await page.ContentAsync();
-                if (NepremicnineParsing.LooksLikeCloudflareChallenge(html))
-                {
-                    throw new CloudflareBlockedException(
-                        $"Cloudflare challenge detected while loading {url}"
-                    );
-                }
+                await EnsureCloudflareClearedAsync(
+                    page,
+                    $"loading {url}",
+                    $"CloudflareBlock while loading {url}",
+                    cancellationToken
+                );
 
                 if (response is { Ok: false } && response.Status >= 400)
                 {
@@ -302,13 +309,12 @@ public sealed class NepremicnineProvider(
                     new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded }
                 );
                 await DismissCookiesAsync(page);
-                var html = await page.ContentAsync();
-                if (NepremicnineParsing.LooksLikeCloudflareChallenge(html))
-                {
-                    throw new CloudflareBlockedException(
-                        $"Cloudflare challenge detected while warming {OriginUrl}"
-                    );
-                }
+                await EnsureCloudflareClearedAsync(
+                    page,
+                    $"warming {OriginUrl}",
+                    $"CloudflareBlock while warming {OriginUrl}",
+                    cancellationToken
+                );
             }
             finally
             {
@@ -321,6 +327,28 @@ public sealed class NepremicnineProvider(
         {
             _warmLock.Release();
         }
+    }
+
+    private async Task EnsureCloudflareClearedAsync(
+        IPage page,
+        string waitContext,
+        string blockedMessage,
+        CancellationToken cancellationToken
+    )
+    {
+        var waitMs = options.Value.CloudflareChallengeWaitMs;
+        await CloudflareChallengeGate.WaitUntilClearedOrThrowAsync(
+            async ct => await page.ContentAsync(),
+            waitMs,
+            blockedMessage,
+            cancellationToken,
+            onChallengeDetected: () =>
+                logger.LogInformation(
+                    "CloudflareChallenge detected while {Context}; waiting up to {WaitMs}ms",
+                    waitContext,
+                    waitMs
+                )
+        );
     }
 
     private static async Task DismissCookiesAsync(IPage page)

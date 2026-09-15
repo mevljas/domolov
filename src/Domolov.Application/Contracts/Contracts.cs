@@ -143,6 +143,7 @@ public sealed record SettingsResponse(
     string TimeZone,
     int MaxConcurrentScans,
     int ScanCooldownMs,
+    int CloudflareChallengeWaitMs,
     bool BrowserHeadless,
     bool TelegramConfigured,
     bool SmtpConfigured,

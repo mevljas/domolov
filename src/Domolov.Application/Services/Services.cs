@@ -457,6 +457,7 @@ public sealed class SettingsService(IOptions<DomolovOptions> options) : ISetting
             o.TimeZone,
             o.MaxConcurrentScans,
             o.ScanCooldownMs,
+            o.CloudflareChallengeWaitMs,
             o.BrowserHeadless,
             !string.IsNullOrWhiteSpace(o.TelegramBotToken),
             !string.IsNullOrWhiteSpace(o.SmtpHost),

@@ -377,6 +377,7 @@ public sealed class ApplicationServicesTests
         s.TimeZone.Should().Be("Europe/Ljubljana");
         s.MaxConcurrentScans.Should().Be(1);
         s.ScanCooldownMs.Should().Be(20_000);
+        s.CloudflareChallengeWaitMs.Should().Be(30_000);
 
         var full = new SettingsService(
             Options.Create(

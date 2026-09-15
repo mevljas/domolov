@@ -50,6 +50,7 @@
   <data name="TimeZone" xml:space="preserve"><value>Time zone</value></data>
   <data name="MaxConcurrentScans" xml:space="preserve"><value>Max concurrent scans</value></data>
   <data name="ScanCooldownMs" xml:space="preserve"><value>Scan cooldown (ms)</value></data>
+  <data name="CloudflareChallengeWaitMs" xml:space="preserve"><value>Cloudflare challenge wait (ms)</value></data>
   <data name="BrowserHeadless" xml:space="preserve"><value>Browser headless</value></data>
   <data name="Role" xml:space="preserve"><value>Role</value></data>
   <data name="Configured" xml:space="preserve"><value>Configured</value></data>
