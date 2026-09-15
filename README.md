@@ -75,7 +75,7 @@ After container recreate, Domolov clears stale Chromium `Singleton*` locks in th
 | `DOMOLOV_VAPID_PUBLIC_KEY` / `PRIVATE_KEY` / `SUBJECT` | Web Push | optional |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry OTLP endpoint | optional |
 
-Discord webhook URLs are configured per Watch notification route in the UI (not via env).
+Discord webhook URLs are configured per Watch notification route in the UI (not via env). Step-by-step: [docs/discord-notifications.md](docs/discord-notifications.md).
 
 Put Domolov behind a reverse proxy with TLS. The admin password is a convenience boundary, not a substitute for network security.
 
@@ -90,7 +90,7 @@ Compose and the Kubernetes manifest mount a volume at `DOMOLOV_DATA_PROTECTION_K
 
 ## Notifications
 
-Server-wide credentials come from env. Each Watch has **NotificationRoutes** choosing channel, destination, and triggers.
+Server-wide credentials come from env. Each Watch has **NotificationRoutes** choosing channel, destination, and triggers. For Discord webhooks, see [docs/discord-notifications.md](docs/discord-notifications.md).
 
 ## Kubernetes
 
