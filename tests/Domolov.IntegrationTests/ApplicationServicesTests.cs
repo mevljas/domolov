@@ -215,6 +215,96 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
+    public async Task ListingQueryService_newest_and_price_drops()
+    {
+        await using var root = BuildHost();
+        await using var scope = root.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+        var listings = scope.ServiceProvider.GetRequiredService<IListingQueryService>();
+
+        var older = new Listing
+        {
+            ProviderId = "nepremicnine",
+            ExternalId = "old",
+            Url = "https://www.nepremicnine.net/oglasi/old/",
+            Title = "Older",
+            FirstSeenAt = DateTimeOffset.UtcNow.AddDays(-5),
+            LastSeenAt = DateTimeOffset.UtcNow.AddDays(-1),
+        };
+        var newer = new Listing
+        {
+            ProviderId = "nepremicnine",
+            ExternalId = "new",
+            Url = "https://www.nepremicnine.net/oglasi/new/",
+            Title = "Newer",
+            FirstSeenAt = DateTimeOffset.UtcNow.AddHours(-1),
+            LastSeenAt = DateTimeOffset.UtcNow,
+        };
+        var drop = new Listing
+        {
+            ProviderId = "nepremicnine",
+            ExternalId = "drop",
+            Url = "https://www.nepremicnine.net/oglasi/drop/",
+            Title = "Drop",
+            FirstSeenAt = DateTimeOffset.UtcNow.AddDays(-3),
+            LastSeenAt = DateTimeOffset.UtcNow,
+        };
+        var rise = new Listing
+        {
+            ProviderId = "nepremicnine",
+            ExternalId = "rise",
+            Url = "https://www.nepremicnine.net/oglasi/rise/",
+            Title = "Rise",
+            FirstSeenAt = DateTimeOffset.UtcNow.AddDays(-2),
+            LastSeenAt = DateTimeOffset.UtcNow,
+        };
+        db.Listings.AddRange(older, newer, drop, rise);
+        await db.SaveChangesAsync();
+
+        db.PriceObservations.AddRange(
+            new PriceObservation
+            {
+                ListingId = drop.Id,
+                Amount = 200_000,
+                Currency = "EUR",
+                ObservedAt = DateTimeOffset.UtcNow.AddDays(-2),
+            },
+            new PriceObservation
+            {
+                ListingId = drop.Id,
+                Amount = 180_000,
+                Currency = "EUR",
+                ObservedAt = DateTimeOffset.UtcNow.AddHours(-2),
+            },
+            new PriceObservation
+            {
+                ListingId = rise.Id,
+                Amount = 100_000,
+                Currency = "EUR",
+                ObservedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            },
+            new PriceObservation
+            {
+                ListingId = rise.Id,
+                Amount = 110_000,
+                Currency = "EUR",
+                ObservedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            }
+        );
+        await db.SaveChangesAsync();
+
+        var newest = await listings.GetNewestAsync(10);
+        newest.Should().NotBeEmpty();
+        newest[0].ExternalId.Should().Be("new");
+
+        var drops = await listings.GetPriceDropsAsync(10);
+        drops.Should().ContainSingle(l => l.ExternalId == "drop");
+        drops[0].LatestPrice.Should().Be(180_000);
+        drops[0].PreviousPrice.Should().Be(200_000);
+        drops.Should().NotContain(l => l.ExternalId == "rise");
+    }
+
+    [Fact]
     public async Task ListingQueryService_DeleteAllAsync_clears_listings_and_cascades()
     {
         await using var root = BuildHost();

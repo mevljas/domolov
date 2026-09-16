@@ -1,5 +1,11 @@
 ﻿@page "/not-found"
 @layout MainLayout
+@inject IStringLocalizer<SharedResources> L
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>404</PageTitle>
+
+<MudStack Spacing="2" Class="py-8">
+    <MudText Typo="Typo.h3">404</MudText>
+    <MudText>@L["ListingNotFound"]</MudText>
+    <MudButton Href="" Variant="Variant.Filled" Color="Color.Primary">@L["NavHome"]</MudButton>
+</MudStack>

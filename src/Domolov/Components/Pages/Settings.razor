@@ -8,33 +8,49 @@
 
 <PageTitle>@L["NavSettings"]</PageTitle>
 
-<h1>@L["NavSettings"]</h1>
-
 @{
     var s = SettingsService.GetSettings();
 }
 
-<dl>
-    <dt>@L["TimeZone"]</dt><dd>@s.TimeZone</dd>
-    <dt>@L["MaxConcurrentScans"]</dt><dd>@s.MaxConcurrentScans</dd>
-    <dt>@L["ScanCooldownMs"]</dt><dd>@s.ScanCooldownMs</dd>
-    <dt>@L["CloudflareChallengeWaitMs"]</dt><dd>@s.CloudflareChallengeWaitMs</dd>
-    <dt>@L["BrowserHeadless"]</dt><dd>@s.BrowserHeadless</dd>
-    <dt>@L["Role"]</dt><dd>@s.Role</dd>
-    <dt>Telegram</dt><dd>@(s.TelegramConfigured ? L["Configured"] : L["NotConfigured"])</dd>
-    <dt>SMTP</dt><dd>@(s.SmtpConfigured ? L["Configured"] : L["NotConfigured"])</dd>
-    <dt>Web Push</dt><dd>@(s.VapidConfigured ? L["Configured"] : L["NotConfigured"])</dd>
-</dl>
+<MudStack Spacing="4">
+    <MudText Typo="Typo.h1">@L["NavSettings"]</MudText>
 
-<h2>@L["Language"]</h2>
-<button class="btn btn-outline-primary" @onclick='() => SetCulture("sl-SI")'>Slovenščina</button>
-<button class="btn btn-outline-primary" @onclick='() => SetCulture("en")'>English</button>
+    <MudPaper Class="pa-4" Elevation="0" Outlined="true">
+        <MudSimpleTable Dense="true" Style="background: transparent">
+            <tbody>
+                <tr><td>@L["TimeZone"]</td><td>@s.TimeZone</td></tr>
+                <tr><td>@L["MaxConcurrentScans"]</td><td>@s.MaxConcurrentScans</td></tr>
+                <tr><td>@L["ScanCooldownMs"]</td><td>@s.ScanCooldownMs</td></tr>
+                <tr><td>@L["CloudflareChallengeWaitMs"]</td><td>@s.CloudflareChallengeWaitMs</td></tr>
+                <tr><td>@L["BrowserHeadless"]</td><td>@s.BrowserHeadless</td></tr>
+                <tr><td>@L["Role"]</td><td>@s.Role</td></tr>
+                <tr><td>Telegram</td><td>@(s.TelegramConfigured ? L["Configured"] : L["NotConfigured"])</td></tr>
+                <tr><td>SMTP</td><td>@(s.SmtpConfigured ? L["Configured"] : L["NotConfigured"])</td></tr>
+                <tr><td>Web Push</td><td>@(s.VapidConfigured ? L["Configured"] : L["NotConfigured"])</td></tr>
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-3">@L["Language"]</MudText>
+        <MudStack Row="true" Spacing="2">
+            <form method="post" action="@CultureAction("sl-SI")" data-enhance="false">
+                <AntiforgeryToken />
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Outlined" Color="Color.Primary">
+                    Slovenščina
+                </MudButton>
+            </form>
+            <form method="post" action="@CultureAction("en")" data-enhance="false">
+                <AntiforgeryToken />
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Outlined" Color="Color.Primary">
+                    English
+                </MudButton>
+            </form>
+        </MudStack>
+    </MudPaper>
+</MudStack>
 
 @code {
-    private async Task SetCulture(string culture)
-    {
-        using var client = new HttpClient { BaseAddress = new Uri(Nav.BaseUri) };
-        await client.PostAsync($"/api/culture?culture={Uri.EscapeDataString(culture)}", null);
-        Nav.NavigateTo(Nav.Uri, forceLoad: true);
-    }
+    private string CultureAction(string culture) =>
+        $"/api/culture?culture={Uri.EscapeDataString(culture)}&returnUrl={Uri.EscapeDataString("/settings")}";
 }

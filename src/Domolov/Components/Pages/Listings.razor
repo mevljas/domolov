@@ -1,0 +1,148 @@
+@page "/listings"
+@rendermode InteractiveServer
+@using Domolov.Application.Contracts
+@using Domolov.Application.Services
+@using Domolov.Components.Listings
+@inject IListingQueryService ListingQuery
+@inject IWatchService Watches
+@inject IStringLocalizer<SharedResources> L
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@L["NavListings"]</PageTitle>
+
+<MudStack Spacing="4" Class="domolov-feed-enter">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudText Typo="Typo.h1">@L["NavListings"]</MudText>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   Disabled="@(_busy || _items is null || _items.Count == 0)"
+                   OnClick="DeleteAllAsync">
+            @L["DeleteAllResults"]
+        </MudButton>
+    </MudStack>
+
+    <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudSelect T="string"
+                   Label="@L["FilterWatch"]"
+                   Value="_watchIdText"
+                   ValueChanged="OnWatchChanged"
+                   Style="min-width: 14rem">
+            <MudSelectItem Value="@("")">@L["AllWatches"]</MudSelectItem>
+            @if (_watches is not null)
+            {
+                @foreach (var w in _watches)
+                {
+                    <MudSelectItem Value="@w.Id.ToString()">@w.Name</MudSelectItem>
+                }
+            }
+        </MudSelect>
+        <MudSwitch T="bool"
+                   Value="_bookmarkedOnly"
+                   ValueChanged="OnBookmarkedChanged"
+                   Label="@L["BookmarkedOnly"]"
+                   Color="Color.Primary" />
+    </MudStack>
+
+    @if (_items is null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_items.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+            @(_bookmarkedOnly ? L["NoBookmarks"] : L["NoResults"])
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+            @foreach (var item in _items)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <ListingSummaryCard Item="item" OnToggleBookmark="() => ToggleBookmarkAsync(item)" />
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudStack>
+
+@code {
+    private IReadOnlyList<ListingResponse>? _items;
+    private IReadOnlyList<WatchResponse>? _watches;
+    private string _watchIdText = "";
+    private bool _bookmarkedOnly;
+    private bool _busy;
+
+    [SupplyParameterFromQuery(Name = "bookmarked")]
+    public bool? BookmarkedQuery { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (BookmarkedQuery == true)
+        {
+            _bookmarkedOnly = true;
+        }
+
+        _watches = await Watches.GetAllAsync();
+        await ReloadAsync();
+    }
+
+    private async Task OnWatchChanged(string value)
+    {
+        _watchIdText = value;
+        await ReloadAsync();
+    }
+
+    private async Task OnBookmarkedChanged(bool value)
+    {
+        _bookmarkedOnly = value;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        Guid? watchId = Guid.TryParse(_watchIdText, out var id) ? id : null;
+        _items = await ListingQuery.GetForWatchAsync(watchId, _bookmarkedOnly);
+    }
+
+    private async Task ToggleBookmarkAsync(ListingResponse item)
+    {
+        var next = !item.IsBookmarked;
+        await ListingQuery.SetBookmarkAsync(item.Id, next);
+        Snackbar.Add(next ? L["Bookmark"] : L["Unbookmark"], Severity.Success);
+        await ReloadAsync();
+    }
+
+    private async Task DeleteAllAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            L["DeleteAllResults"],
+            L["DeleteAllResultsConfirm"].Value,
+            yesText: L["Delete"],
+            cancelText: L["Cancel"]
+        );
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await ListingQuery.DeleteAllAsync();
+            await ReloadAsync();
+            Snackbar.Add(L["NoResults"], Severity.Info);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

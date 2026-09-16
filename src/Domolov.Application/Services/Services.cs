@@ -224,6 +224,17 @@ public interface IListingQueryService
         bool bookmarkedOnly,
         CancellationToken cancellationToken = default
     );
+
+    Task<IReadOnlyList<ListingResponse>> GetNewestAsync(
+        int take = 24,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<IReadOnlyList<ListingResponse>> GetPriceDropsAsync(
+        int take = 24,
+        CancellationToken cancellationToken = default
+    );
+
     Task<ListingDetailResponse?> GetDetailAsync(
         Guid id,
         CancellationToken cancellationToken = default
@@ -264,7 +275,55 @@ public sealed class ListingQueryService(IAppDbContext db) : IListingQueryService
             .Take(500)
             .ToListAsync(cancellationToken);
 
-        return items.Select(MapListItem).ToList();
+        return items.Select(l => MapListItem(l)).ToList();
+    }
+
+    public async Task<IReadOnlyList<ListingResponse>> GetNewestAsync(
+        int take = 24,
+        CancellationToken cancellationToken = default
+    )
+    {
+        take = Math.Clamp(take, 1, 100);
+        var items = await db
+            .Listings.AsNoTracking()
+            .Include(l => l.Prices)
+            .Include(l => l.Bookmark)
+            .OrderByDescending(l => l.FirstSeenAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+
+        return items.Select(l => MapListItem(l)).ToList();
+    }
+
+    public async Task<IReadOnlyList<ListingResponse>> GetPriceDropsAsync(
+        int take = 24,
+        CancellationToken cancellationToken = default
+    )
+    {
+        take = Math.Clamp(take, 1, 100);
+        var candidates = await db
+            .Listings.AsNoTracking()
+            .Include(l => l.Prices)
+            .Include(l => l.Bookmark)
+            .Where(l => l.Prices.Count >= 2)
+            .ToListAsync(cancellationToken);
+
+        return candidates
+            .Select(l =>
+            {
+                var ordered = l.Prices.OrderByDescending(p => p.ObservedAt).Take(2).ToList();
+                if (ordered.Count < 2 || ordered[0].Amount >= ordered[1].Amount)
+                {
+                    return (Item: (ListingResponse?)null, DroppedAt: DateTimeOffset.MinValue);
+                }
+
+                return (Item: MapListItem(l, ordered[1].Amount), DroppedAt: ordered[0].ObservedAt);
+            })
+            .Where(x => x.Item is not null)
+            .OrderByDescending(x => x.DroppedAt)
+            .Take(take)
+            .Select(x => x.Item!)
+            .ToList();
     }
 
     public async Task<ListingDetailResponse?> GetDetailAsync(
@@ -350,7 +409,7 @@ public sealed class ListingQueryService(IAppDbContext db) : IListingQueryService
         return listings.Count;
     }
 
-    private static ListingResponse MapListItem(Listing listing)
+    private static ListingResponse MapListItem(Listing listing, decimal? previousPrice = null)
     {
         var latest = listing.Prices.OrderByDescending(p => p.ObservedAt).FirstOrDefault();
         return new ListingResponse(
@@ -372,7 +431,8 @@ public sealed class ListingQueryService(IAppDbContext db) : IListingQueryService
             latest?.Currency ?? "EUR",
             listing.FirstSeenAt,
             listing.LastSeenAt,
-            listing.Bookmark is not null
+            listing.Bookmark is not null,
+            previousPrice
         );
     }
 }

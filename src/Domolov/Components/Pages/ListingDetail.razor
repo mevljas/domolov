@@ -6,34 +6,40 @@
 @inject IListingQueryService Listings
 @inject IJSRuntime Js
 @inject IStringLocalizer<SharedResources> L
+@inject ISnackbar Snackbar
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>@(_detail?.Title ?? L["Listing"])</PageTitle>
 
-@if (_detail is null)
+@if (_loading)
 {
-    <p>@L["Loading"]</p>
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-6" />
+}
+else if (_detail is null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">@L["ListingNotFound"]</MudAlert>
+    <MudButton Href="listings" Variant="Variant.Text" Color="Color.Primary" Class="mt-2">@L["NavListings"]</MudButton>
 }
 else
 {
-    <article class="listing-detail">
+    <article class="listing-detail domolov-feed-enter">
         @if (!string.IsNullOrWhiteSpace(TypeRoomsLine))
         {
-            <p class="listing-detail__type text-muted mb-1">@TypeRoomsLine</p>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary mb-1">@TypeRoomsLine</MudText>
         }
-        <h1>@(_detail.Location ?? _detail.Title)</h1>
+        <MudText Typo="Typo.h1">@(_detail.Location ?? _detail.Title)</MudText>
         @if (!string.IsNullOrWhiteSpace(_detail.Location) &&
              !string.Equals(_detail.Location, _detail.Title, StringComparison.Ordinal))
         {
-            <p class="text-muted">@_detail.Title</p>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@_detail.Title</MudText>
         }
         @if (LatestPrice is decimal price)
         {
-            <p class="listing-detail__price">@PriceFormatting.Format(price, LatestCurrency)</p>
+            <MudText Typo="Typo.h4" Class="listing-detail__price">@PriceFormatting.Format(price, LatestCurrency)</MudText>
         }
         @if (AttributeParts.Count > 0)
         {
-            <p class="listing-detail__attrs">@string.Join(" · ", AttributeParts)</p>
+            <MudText Typo="Typo.body2" Class="listing-detail__attrs mud-text-secondary">@string.Join(" · ", AttributeParts)</MudText>
         }
         @if (!string.IsNullOrEmpty(_detail.ImageUrl))
         {
@@ -41,21 +47,34 @@ else
         }
         @if (!string.IsNullOrWhiteSpace(_detail.Description))
         {
-            <p class="listing-detail__desc">@_detail.Description</p>
+            <MudText Typo="Typo.body1" Class="listing-detail__desc">@_detail.Description</MudText>
         }
-        <p><a href="@_detail.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a></p>
-        <button class="btn btn-outline-secondary" @onclick="ToggleBookmarkAsync">
-            @(_detail.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
-        </button>
+        <MudStack Row="true" Spacing="2" Class="mt-3" Wrap="Wrap.Wrap">
+            <MudButton Href="@_detail.Url" Target="_blank" Variant="Variant.Outlined" Color="Color.Primary">
+                @L["OpenOriginal"]
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ToggleBookmarkAsync">
+                @(_detail.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
+            </MudButton>
+        </MudStack>
 
-        <h2 class="mt-4">@L["PriceHistory"]</h2>
-        <canvas id="priceChart" width="600" height="280"></canvas>
+        <MudText Typo="Typo.h2" Class="mt-6 mb-3">@L["PriceHistory"]</MudText>
+        @if (_detail.Prices.Count == 0)
+        {
+            <MudText Class="mud-text-secondary">—</MudText>
+        }
+        else
+        {
+            <canvas id="priceChart" width="600" height="280" class="listing-detail__chart"></canvas>
+        }
     </article>
 }
 
 @code {
     [Parameter] public Guid Id { get; set; }
     private ListingDetailResponse? _detail;
+    private bool _loading = true;
+    private bool _chartRendered;
 
     private decimal? LatestPrice =>
         _detail?.Prices.Count > 0 ? _detail.Prices[^1].Amount : null;
@@ -118,12 +137,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         _detail = await Listings.GetDetailAsync(Id);
+        _loading = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _detail is not null && _detail.Prices.Count > 0)
+        if (!_chartRendered && _detail is not null && _detail.Prices.Count > 0)
         {
+            _chartRendered = true;
             var labels = _detail.Prices.Select(p => p.ObservedAt.ToString("u")).ToArray();
             var values = _detail.Prices.Select(p => (double)p.Amount).ToArray();
             await Js.InvokeVoidAsync("domolov.renderPriceChart", "priceChart", labels, values);
@@ -132,8 +153,14 @@ else
 
     private async Task ToggleBookmarkAsync()
     {
-        if (_detail is null) return;
-        await Listings.SetBookmarkAsync(_detail.Id, !_detail.IsBookmarked);
+        if (_detail is null)
+        {
+            return;
+        }
+
+        var next = !_detail.IsBookmarked;
+        await Listings.SetBookmarkAsync(_detail.Id, next);
+        Snackbar.Add(next ? L["Bookmark"] : L["Unbookmark"], Severity.Success);
         _detail = await Listings.GetDetailAsync(Id);
     }
 }

@@ -10,10 +10,24 @@
   <data name="NoWatches" xml:space="preserve"><value>No watches yet. Create one under</value></data>
   <data name="NavHome" xml:space="preserve"><value>Home</value></data>
   <data name="NavWatches" xml:space="preserve"><value>Watches</value></data>
-  <data name="NavResults" xml:space="preserve"><value>Results</value></data>
+  <data name="NavListings" xml:space="preserve"><value>Listings</value></data>
+  <data name="NavResults" xml:space="preserve"><value>Listings</value></data>
   <data name="NavBookmarks" xml:space="preserve"><value>Bookmarks</value></data>
-  <data name="NavScans" xml:space="preserve"><value>Scan history</value></data>
+  <data name="NavScans" xml:space="preserve"><value>Scans</value></data>
   <data name="NavSettings" xml:space="preserve"><value>Settings</value></data>
+  <data name="HuntNewest" xml:space="preserve"><value>Newest</value></data>
+  <data name="HuntPriceDrops" xml:space="preserve"><value>Price drops</value></data>
+  <data name="HuntEmptyNewest" xml:space="preserve"><value>No new listings yet.</value></data>
+  <data name="HuntEmptyDrops" xml:space="preserve"><value>No price drops yet.</value></data>
+  <data name="WatchHealth" xml:space="preserve"><value>Your watches</value></data>
+  <data name="BookmarkedOnly" xml:space="preserve"><value>Bookmarked only</value></data>
+  <data name="ConfirmDeleteWatch" xml:space="preserve"><value>Delete this watch? Scan history for it will remain.</value></data>
+  <data name="ConfirmDeleteRoute" xml:space="preserve"><value>Delete this notification route?</value></data>
+  <data name="RecentScans" xml:space="preserve"><value>Recent scans</value></data>
+  <data name="NoScans" xml:space="preserve"><value>No scans yet.</value></data>
+  <data name="ListingNotFound" xml:space="preserve"><value>Listing not found.</value></data>
+  <data name="PriceDropFrom" xml:space="preserve"><value>Was {0}</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Login" xml:space="preserve"><value>Sign in</value></data>
   <data name="Password" xml:space="preserve"><value>Password</value></data>
   <data name="SignIn" xml:space="preserve"><value>Sign in</value></data>
@@ -38,8 +52,8 @@
   <data name="Listing" xml:space="preserve"><value>Listing</value></data>
   <data name="PriceHistory" xml:space="preserve"><value>Price history</value></data>
   <data name="NoBookmarks" xml:space="preserve"><value>No bookmarks yet.</value></data>
-  <data name="NoResults" xml:space="preserve"><value>No results yet.</value></data>
-  <data name="DeleteAllResults" xml:space="preserve"><value>Delete all results</value></data>
+  <data name="NoResults" xml:space="preserve"><value>No listings yet.</value></data>
+  <data name="DeleteAllResults" xml:space="preserve"><value>Delete all listings</value></data>
   <data name="DeleteAllResultsConfirm" xml:space="preserve"><value>Delete every listing? Prices, sightings, and bookmarks will be removed. Watches are kept.</value></data>
   <data name="Watch" xml:space="preserve"><value>Watch</value></data>
   <data name="Status" xml:space="preserve"><value>Status</value></data>

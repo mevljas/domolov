@@ -12,103 +12,191 @@
 @inject IScanRunQueryService ScanQuery
 @inject IOptions<DomolovOptions> Options
 @inject IStringLocalizer<SharedResources> L
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>@L["NavWatches"]</PageTitle>
 
-<h1>@L["NavWatches"]</h1>
+<MudStack Spacing="4">
+    <MudText Typo="Typo.h1">@L["NavWatches"]</MudText>
 
-<section class="mb-4">
-    <h2>@L["CreateWatch"]</h2>
-    <EditForm Model="_create" OnValidSubmit="CreateAsync">
-        <DataAnnotationsValidator />
-        <div class="mb-2">
-            <InputText class="form-control" @bind-Value="_create.Name" placeholder="@L["Name"]" />
-        </div>
-        <div class="mb-2">
-            <InputText class="form-control" @bind-Value="_create.SearchUrl" placeholder="@L["SearchUrl"]" />
-        </div>
-        <div class="mb-2">
-            <WatchScheduleEditor @bind-Cron="_create.Cron" TimeZoneId="@TimeZoneId" />
-        </div>
-        <button class="btn btn-primary" type="submit">@L["Save"]</button>
-    </EditForm>
-</section>
+    <MudPaper Class="pa-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-3">@L["CreateWatch"]</MudText>
+        <EditForm Model="_create" OnValidSubmit="CreateAsync">
+            <DataAnnotationsValidator />
+            <MudStack Spacing="3">
+                <MudTextField @bind-Value="_create.Name" Label="@L["Name"]" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_create.SearchUrl" Label="@L["SearchUrl"]" Variant="Variant.Outlined" />
+                <WatchScheduleEditor @bind-Cron="_create.Cron" TimeZoneId="@TimeZoneId" />
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                    @L["Save"]
+                </MudButton>
+            </MudStack>
+        </EditForm>
+    </MudPaper>
 
-@if (_watches is null)
-{
-    <p>@L["Loading"]</p>
-}
-else
-{
-    @foreach (var w in _watches)
+    @if (_watches is null)
     {
-        <article class="mb-4 border-bottom pb-3">
-            <h3>@w.Name</h3>
-            <p><a href="@w.SearchUrl" target="_blank" rel="noopener">@w.SearchUrl</a></p>
-            <p>@L["Schedule"]: @SummarizeSchedule(w.Cron) | @L["Baseline"]: @(w.HasCompletedBaseline ? L["Yes"] : L["No"])</p>
-            @if (IsCloudflareCoolingDown(w))
-            {
-                <p class="text-warning mb-2">
-                    @string.Format(L["CloudflareBlockedUntil"], w.CloudflareBlockedUntil)
-                </p>
-            }
-            else if (w.CloudflareStrikeCount > 0)
-            {
-                <p class="text-muted mb-2">@string.Format(L["CloudflareStrikes"], w.CloudflareStrikeCount)</p>
-            }
-            @if (_active.TryGetValue(w.Id, out var activeRun))
-            {
-                <p class="text-muted mb-2">@FormatActiveStatus(activeRun)</p>
-            }
-            <div class="mb-2" style="max-width: 28rem">
-                <WatchScheduleEditor
-                    Cron="@GetEditCron(w.Id, w.Cron)"
-                    CronChanged="cron => OnEditCronChanged(w.Id, cron)"
-                    TimeZoneId="@TimeZoneId"
-                />
-                <button class="btn btn-sm btn-outline-primary mt-2" type="button" @onclick="() => SaveScheduleAsync(w)">
-                    @L["SaveSchedule"]
-                </button>
-            </div>
-            <button
-                class="btn btn-sm btn-secondary"
-                disabled="@_active.ContainsKey(w.Id)"
-                @onclick="() => RunAsync(w.Id)">
-                @L["RunNow"]
-            </button>
-            <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(w.Id)">@L["Delete"]</button>
-
-            <h4 class="mt-3">@L["NotificationRoutes"]</h4>
-            <ul>
-                @foreach (var r in w.Routes)
-                {
-                    <li>
-                        @r.Channel → @r.Destination (@r.Triggers)
-                        <button class="btn btn-link btn-sm" @onclick="() => DeleteRouteAsync(w.Id, r.Id)">@L["Delete"]</button>
-                    </li>
-                }
-            </ul>
-            <div class="d-flex gap-2 flex-wrap">
-                <InputSelect @bind-Value="_route.Channel" class="form-select" style="max-width:10rem">
-                    @foreach (var c in Enum.GetValues<NotificationChannel>())
-                    {
-                        <option value="@c">@c</option>
-                    }
-                </InputSelect>
-                <InputText class="form-control" @bind-Value="_route.Destination" placeholder="@L["Destination"]" />
-                <button class="btn btn-outline-primary" type="button" @onclick="() => AddRouteAsync(w.Id)">@L["AddRoute"]</button>
-            </div>
-        </article>
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
     }
-}
+    else if (_watches.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@L["NoWatches"] @L["NavWatches"]</MudAlert>
+    }
+    else
+    {
+        <MudExpansionPanels MultiExpansion="true" Class="domolov-feed-enter">
+            @foreach (var w in _watches)
+            {
+                <MudExpansionPanel>
+                    <TitleContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.h6">@w.Name</MudText>
+                            @if (_active.ContainsKey(w.Id))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">@FormatActiveStatus(_active[w.Id])</MudChip>
+                            }
+                            @if (IsCloudflareCoolingDown(w))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["CloudflareBadge"]</MudChip>
+                            }
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudStack Spacing="3">
+                            <MudLink Href="@w.SearchUrl" Target="_blank">@w.SearchUrl</MudLink>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                @L["Schedule"]: @SummarizeSchedule(w.Cron) · @L["Baseline"]: @(w.HasCompletedBaseline ? L["Yes"] : L["No"])
+                            </MudText>
+                            @if (IsCloudflareCoolingDown(w))
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true">
+                                    @string.Format(L["CloudflareBlockedUntil"], w.CloudflareBlockedUntil)
+                                </MudAlert>
+                            }
+                            else if (w.CloudflareStrikeCount > 0)
+                            {
+                                <MudText Typo="Typo.caption">@string.Format(L["CloudflareStrikes"], w.CloudflareStrikeCount)</MudText>
+                            }
+
+                            <MudPaper Class="pa-3" Elevation="0" Style="background: var(--domolov-sage)">
+                                <WatchScheduleEditor
+                                    Cron="@GetEditCron(w.Id, w.Cron)"
+                                    CronChanged="cron => OnEditCronChanged(w.Id, cron)"
+                                    TimeZoneId="@TimeZoneId" />
+                                <MudButton Class="mt-2" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                           OnClick="() => SaveScheduleAsync(w)">
+                                    @L["SaveSchedule"]
+                                </MudButton>
+                            </MudPaper>
+
+                            <MudStack Row="true" Spacing="2">
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Disabled="@_active.ContainsKey(w.Id)"
+                                           OnClick="() => RunAsync(w.Id)">
+                                    @L["RunNow"]
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="() => DeleteAsync(w.Id)">
+                                    @L["Delete"]
+                                </MudButton>
+                            </MudStack>
+
+                            <MudText Typo="Typo.subtitle1">@L["NotificationRoutes"]</MudText>
+                            @if (w.Routes.Count == 0)
+                            {
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">—</MudText>
+                            }
+                            else
+                            {
+                                <MudStack Spacing="1">
+                                    @foreach (var r in w.Routes)
+                                    {
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <MudText Typo="Typo.body2">@r.Channel → @r.Destination (@r.Triggers)</MudText>
+                                            <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="() => DeleteRouteAsync(w.Id, r.Id)" />
+                                        </MudStack>
+                                    }
+                                </MudStack>
+                            }
+
+                            @{
+                                var routeForm = GetRouteForm(w.Id);
+                            }
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
+                                <MudSelect T="NotificationChannel" @bind-Value="routeForm.Channel" Label="Channel" Style="min-width: 10rem">
+                                    @foreach (var c in Enum.GetValues<NotificationChannel>())
+                                    {
+                                        <MudSelectItem Value="@c">@c</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudTextField @bind-Value="routeForm.Destination" Label="@L["Destination"]" Style="min-width: 14rem" />
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => AddRouteAsync(w.Id)">
+                                    @L["AddRoute"]
+                                </MudButton>
+                            </MudStack>
+
+                            <MudText Typo="Typo.subtitle1">@L["RecentScans"]</MudText>
+                            @{
+                                var recent = GetRecentForWatch(w.Id);
+                            }
+                            @if (recent.Count == 0)
+                            {
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["NoScans"]</MudText>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Hover="true" Style="background: transparent">
+                                    <thead>
+                                        <tr>
+                                            <th>@L["Status"]</th>
+                                            <th>@L["QueuedAt"]</th>
+                                            <th>@L["New"]</th>
+                                            <th>@L["PriceChanges"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in recent)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @FormatScanStatus(r)
+                                                    @if (r.CloudflareBlocked)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-1">@L["CloudflareBadge"]</MudChip>
+                                                    }
+                                                </td>
+                                                <td>@r.QueuedAt.ToLocalTime().ToString("g")</td>
+                                                <td>@r.NewCount</td>
+                                                <td>@r.PriceChangeCount</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudStack>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    }
+</MudStack>
 
 @code {
     private IReadOnlyList<WatchResponse>? _watches;
     private CreateWatchRequest _create = NewCreateRequest();
-    private RouteForm _route = new();
+    private readonly Dictionary<Guid, RouteForm> _routes = new();
     private readonly Dictionary<Guid, string> _editCron = new();
     private Dictionary<Guid, ScanRunResponse> _active = new();
+    private IReadOnlyList<ScanRunResponse> _recentScans = [];
     private CancellationTokenSource? _pollCts;
 
     private string TimeZoneId => Options.Value.TimeZone;
@@ -128,9 +216,11 @@ else
             foreach (var w in _watches)
             {
                 _editCron[w.Id] = w.Cron;
+                _ = GetRouteForm(w.Id);
             }
         }
 
+        _recentScans = await ScanQuery.GetRecentAsync(50);
         await ReloadActiveAsync();
     }
 
@@ -138,6 +228,20 @@ else
     {
         var active = await ScanQuery.GetActiveAsync();
         _active = active.ToDictionary(r => r.WatchId);
+    }
+
+    private IReadOnlyList<ScanRunResponse> GetRecentForWatch(Guid watchId) =>
+        _recentScans.Where(r => r.WatchId == watchId).Take(5).ToList();
+
+    private RouteForm GetRouteForm(Guid watchId)
+    {
+        if (!_routes.TryGetValue(watchId, out var form))
+        {
+            form = new RouteForm();
+            _routes[watchId] = form;
+        }
+
+        return form;
     }
 
     private void EnsurePolling()
@@ -162,6 +266,7 @@ else
                 await InvokeAsync(async () =>
                 {
                     await ReloadActiveAsync();
+                    _recentScans = await ScanQuery.GetRecentAsync(50);
                     StateHasChanged();
                 });
 
@@ -204,6 +309,7 @@ else
         await WatchService.CreateAsync(_create);
         _create = NewCreateRequest();
         await ReloadAsync();
+        Snackbar.Add(L["Save"], Severity.Success);
     }
 
     private async Task SaveScheduleAsync(WatchResponse watch)
@@ -220,11 +326,24 @@ else
             }
         );
         await ReloadAsync();
+        Snackbar.Add(L["SaveSchedule"], Severity.Success);
     }
 
     private async Task DeleteAsync(Guid id)
     {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            L["Delete"],
+            L["ConfirmDeleteWatch"].Value,
+            yesText: L["Delete"],
+            cancelText: L["Cancel"]
+        );
+        if (confirmed != true)
+        {
+            return;
+        }
+
         await WatchService.DeleteAsync(id);
+        _routes.Remove(id);
         await ReloadAsync();
     }
 
@@ -237,18 +356,30 @@ else
 
     private async Task AddRouteAsync(Guid watchId)
     {
+        var route = GetRouteForm(watchId);
         await WatchService.AddRouteAsync(watchId, new CreateNotificationRouteRequest
         {
-            Channel = _route.Channel,
-            Destination = _route.Destination,
+            Channel = route.Channel,
+            Destination = route.Destination,
             Triggers = NotificationTrigger.NewListing | NotificationTrigger.PriceDecreased,
         });
-        _route = new();
+        _routes[watchId] = new RouteForm();
         await ReloadAsync();
     }
 
     private async Task DeleteRouteAsync(Guid watchId, Guid routeId)
     {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            L["Delete"],
+            L["ConfirmDeleteRoute"].Value,
+            yesText: L["Delete"],
+            cancelText: L["Cancel"]
+        );
+        if (confirmed != true)
+        {
+            return;
+        }
+
         await WatchService.DeleteRouteAsync(watchId, routeId);
         await ReloadAsync();
     }
@@ -270,6 +401,25 @@ else
             )
         );
         return string.Format(L["ScanStatusWithElapsed"], label, elapsed);
+    }
+
+    private string FormatScanStatus(ScanRunResponse run)
+    {
+        var label = run.Status switch
+        {
+            ScanRunStatus.Queued => L["ScanStatusQueued"],
+            ScanRunStatus.Running => L["ScanStatusRunning"],
+            ScanRunStatus.Baseline => L["ScanStatusBaseline"],
+            ScanRunStatus.Succeeded => L["ScanStatusSucceeded"],
+            ScanRunStatus.Failed => L["ScanStatusFailed"],
+            _ => run.Status.ToString(),
+        };
+        if (!ScanRunProgress.IsActive(run.Status))
+        {
+            return label;
+        }
+
+        return FormatActiveStatus(run);
     }
 
     private static bool IsCloudflareCoolingDown(WatchResponse watch) =>

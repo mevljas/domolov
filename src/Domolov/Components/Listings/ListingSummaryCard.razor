@@ -2,50 +2,49 @@
 @using Domolov.Domain.Services
 @inject IStringLocalizer<SharedResources> L
 
-<article class="listing-summary-card">
+<MudCard Class="listing-summary-card" Elevation="0" Outlined="true">
     @if (!string.IsNullOrEmpty(Item.ImageUrl))
     {
-        <a class="listing-summary-card__media" href="listings/@Item.Id">
-            <img src="@Item.ImageUrl" alt="" />
-        </a>
+        <MudCardMedia Image="@Item.ImageUrl" Height="160" Style="object-fit: cover;" />
     }
-    <div class="listing-summary-card__body">
+    <MudCardContent>
         @if (!string.IsNullOrWhiteSpace(TypeRoomsLine))
         {
-            <p class="listing-summary-card__type">@TypeRoomsLine</p>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@TypeRoomsLine</MudText>
         }
-        @if (!string.IsNullOrWhiteSpace(Item.Location))
-        {
-            <h3 class="listing-summary-card__location">
-                <a href="listings/@Item.Id">@Item.Location</a>
-            </h3>
-        }
-        else
-        {
-            <h3 class="listing-summary-card__location">
-                <a href="listings/@Item.Id">@Item.Title</a>
-            </h3>
-        }
+        <MudText Typo="Typo.h6" Class="listing-summary-card__location">
+            <MudLink Href="@($"listings/{Item.Id}")" Color="Color.Primary">@(Item.Location ?? Item.Title)</MudLink>
+        </MudText>
         @if (!string.IsNullOrWhiteSpace(ShortDescription))
         {
-            <p class="listing-summary-card__desc">@ShortDescription</p>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">@ShortDescription</MudText>
         }
         @if (AttributeParts.Count > 0)
         {
-            <p class="listing-summary-card__attrs">@string.Join(" · ", AttributeParts)</p>
+            <MudText Typo="Typo.caption" Class="mt-1">@string.Join(" · ", AttributeParts)</MudText>
         }
         @if (Item.LatestPrice is decimal price)
         {
-            <p class="listing-summary-card__price">@PriceFormatting.Format(price, Item.Currency)</p>
+            <MudText Typo="Typo.h6" Class="listing-summary-card__price mt-2">
+                @PriceFormatting.Format(price, Item.Currency)
+            </MudText>
+            @if (Item.PreviousPrice is decimal prev && prev > price)
+            {
+                <MudText Typo="Typo.caption" Class="listing-summary-card__drop">
+                    @string.Format(L["PriceDropFrom"], PriceFormatting.Format(prev, Item.Currency))
+                </MudText>
+            }
         }
-        <div class="listing-summary-card__actions">
-            <button class="btn btn-sm btn-outline-secondary" @onclick="OnToggleBookmark">
-                @(Item.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
-            </button>
-            <a class="btn btn-sm btn-link" href="@Item.Url" target="_blank" rel="noopener">@L["OpenOriginal"]</a>
-        </div>
-    </div>
-</article>
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" OnClick="OnToggleBookmark">
+            @(Item.IsBookmarked ? L["Unbookmark"] : L["Bookmark"])
+        </MudButton>
+        <MudButton Size="Size.Small" Variant="Variant.Text" Href="@Item.Url" Target="_blank">
+            @L["OpenOriginal"]
+        </MudButton>
+    </MudCardActions>
+</MudCard>
 
 @code {
     [Parameter, EditorRequired]

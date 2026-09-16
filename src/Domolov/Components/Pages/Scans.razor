@@ -11,46 +11,47 @@
 
 <PageTitle>@L["NavScans"]</PageTitle>
 
-<h1>@L["NavScans"]</h1>
+<MudStack Spacing="4">
+    <MudText Typo="Typo.h1">@L["NavScans"]</MudText>
 
-@if (_runs is null)
-{
-    <p>@L["Loading"]</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>@L["Watch"]</th>
-                <th>@L["Status"]</th>
-                <th>@L["QueuedAt"]</th>
-                <th>@L["New"]</th>
-                <th>@L["PriceChanges"]</th>
-                <th>@L["Error"]</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var r in _runs)
-            {
-                <tr>
-                    <td>@r.WatchName</td>
-                    <td>
-                        @FormatStatus(r)
-                        @if (r.CloudflareBlocked)
+    @if (_runs is null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (_runs.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@L["NoScans"]</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="_runs" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm" Class="domolov-feed-enter">
+            <HeaderContent>
+                <MudTh>@L["Watch"]</MudTh>
+                <MudTh>@L["Status"]</MudTh>
+                <MudTh>@L["QueuedAt"]</MudTh>
+                <MudTh>@L["New"]</MudTh>
+                <MudTh>@L["PriceChanges"]</MudTh>
+                <MudTh>@L["Error"]</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="@L["Watch"]">@context.WatchName</MudTd>
+                <MudTd DataLabel="@L["Status"]">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@FormatStatus(context)</MudChip>
+                        @if (context.CloudflareBlocked)
                         {
-                            <span class="badge text-bg-warning ms-1">@L["CloudflareBadge"]</span>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["CloudflareBadge"]</MudChip>
                         }
-                    </td>
-                    <td>@r.QueuedAt</td>
-                    <td>@r.NewCount</td>
-                    <td>@r.PriceChangeCount</td>
-                    <td>@(r.ErrorSummary ?? r.NotifyErrorSummary)</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="@L["QueuedAt"]">@context.QueuedAt.ToLocalTime().ToString("g")</MudTd>
+                <MudTd DataLabel="@L["New"]">@context.NewCount</MudTd>
+                <MudTd DataLabel="@L["PriceChanges"]">@context.PriceChangeCount</MudTd>
+                <MudTd DataLabel="@L["Error"]">@(context.ErrorSummary ?? context.NotifyErrorSummary)</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudStack>
 
 @code {
     private IReadOnlyList<ScanRunResponse>? _runs;
@@ -144,6 +145,17 @@ else
             ScanRunStatus.Succeeded => L["ScanStatusSucceeded"],
             ScanRunStatus.Failed => L["ScanStatusFailed"],
             _ => status.ToString(),
+        };
+
+    private static Color StatusColor(ScanRunStatus status) =>
+        status switch
+        {
+            ScanRunStatus.Succeeded => Color.Success,
+            ScanRunStatus.Failed => Color.Error,
+            ScanRunStatus.Running => Color.Info,
+            ScanRunStatus.Queued => Color.Default,
+            ScanRunStatus.Baseline => Color.Secondary,
+            _ => Color.Default,
         };
 
     public async ValueTask DisposeAsync()

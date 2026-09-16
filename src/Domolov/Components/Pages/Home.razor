@@ -1,44 +1,126 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using Domolov.Application.Contracts
 @using Domolov.Application.Services
+@using Domolov.Components.Listings
+@inject IListingQueryService Listings
 @inject IWatchService Watches
 @inject IStringLocalizer<SharedResources> L
-@attribute [StreamRendering]
+@inject ISnackbar Snackbar
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>@L["AppName"]</PageTitle>
 
-<h1>@L["AppName"]</h1>
-<p>@L["HomeIntro"]</p>
+<MudStack Spacing="4" Class="domolov-feed-enter">
+    <div>
+        <MudText Typo="Typo.h1" Class="domolov-brand mb-1">@L["AppName"]</MudText>
+        <MudText Typo="Typo.body1" Class="mud-text-secondary">@L["HomeIntro"]</MudText>
+    </div>
 
-@if (_watches is null)
-{
-    <p>@L["Loading"]</p>
-}
-else if (_watches.Count == 0)
-{
-    <p>@L["NoWatches"] <a href="watches">@L["NavWatches"]</a></p>
-}
-else
-{
-    <ul>
-        @foreach (var w in _watches)
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+        <MudTabPanel Text="@L["HuntNewest"]" Class="pt-4">
+            @if (_newest is null)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-4" />
+            }
+            else if (_newest.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-2">
+                    @L["HuntEmptyNewest"]
+                    <MudLink Href="watches">@L["NavWatches"]</MudLink>
+                </MudAlert>
+            }
+            else
+            {
+                <MudGrid Spacing="3">
+                    @foreach (var item in _newest)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <ListingSummaryCard Item="item" OnToggleBookmark="() => ToggleBookmarkAsync(item)" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+        <MudTabPanel Text="@L["HuntPriceDrops"]" Class="pt-4">
+            @if (_drops is null)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-4" />
+            }
+            else if (_drops.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    @L["HuntEmptyDrops"]
+                </MudAlert>
+            }
+            else
+            {
+                <MudGrid Spacing="3">
+                    @foreach (var item in _drops)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <ListingSummaryCard Item="item" OnToggleBookmark="() => ToggleBookmarkAsync(item)" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+    </MudTabs>
+
+    <MudPaper Class="pa-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h6" Class="mb-3">@L["WatchHealth"]</MudText>
+        @if (_watches is null)
         {
-            <li>
-                <strong>@w.Name</strong> — @w.SearchUrl
-                @if (w.LastScannedAt is not null)
-                {
-                    <span> (@L["LastScan"]: @w.LastScannedAt)</span>
-                }
-            </li>
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
         }
-    </ul>
-}
+        else if (_watches.Count == 0)
+        {
+            <MudText>
+                @L["NoWatches"] <MudLink Href="watches">@L["NavWatches"]</MudLink>
+            </MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                @foreach (var w in _watches)
+                {
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText>
+                            <strong>@w.Name</strong>
+                            @if (w.LastScannedAt is not null)
+                            {
+                                <span class="mud-text-secondary"> — @L["LastScan"]: @w.LastScannedAt.Value.ToLocalTime().ToString("g")</span>
+                            }
+                        </MudText>
+                        @if (w.CloudflareBlockedUntil is { } until && until > DateTimeOffset.UtcNow)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["CloudflareBadge"]</MudChip>
+                        }
+                    </MudStack>
+                }
+            </MudStack>
+        }
+    </MudPaper>
+</MudStack>
 
 @code {
-    private IReadOnlyList<Domolov.Application.Contracts.WatchResponse>? _watches;
+    private IReadOnlyList<ListingResponse>? _newest;
+    private IReadOnlyList<ListingResponse>? _drops;
+    private IReadOnlyList<WatchResponse>? _watches;
 
     protected override async Task OnInitializedAsync()
     {
         _watches = await Watches.GetAllAsync();
+        _newest = await Listings.GetNewestAsync(24);
+        _drops = await Listings.GetPriceDropsAsync(24);
+    }
+
+    private async Task ToggleBookmarkAsync(ListingResponse item)
+    {
+        var next = !item.IsBookmarked;
+        await Listings.SetBookmarkAsync(item.Id, next);
+        Snackbar.Add(next ? L["Bookmark"] : L["Unbookmark"], Severity.Success);
+        _newest = await Listings.GetNewestAsync(24);
+        _drops = await Listings.GetPriceDropsAsync(24);
     }
 }

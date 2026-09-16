@@ -11,8 +11,21 @@ window.domolov = {
     const max = Math.max(...values);
     const pad = 24;
     const span = Math.max(max - min, 1);
-    ctx.strokeStyle = '#c45c26';
-    ctx.lineWidth = 2;
+
+    // Subtle grid
+    ctx.strokeStyle = '#c9d2cb';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+      const y = pad + ((h - pad * 2) * i) / 2;
+      ctx.beginPath();
+      ctx.moveTo(pad, y);
+      ctx.lineTo(w - pad, y);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#1f4d3a';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
     ctx.beginPath();
     values.forEach((v, i) => {
       const x = pad + (i * (w - pad * 2)) / Math.max(values.length - 1, 1);
@@ -21,8 +34,18 @@ window.domolov = {
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
-    ctx.fillStyle = '#333';
-    ctx.font = '12px sans-serif';
+
+    ctx.fillStyle = '#1f4d3a';
+    values.forEach((v, i) => {
+      const x = pad + (i * (w - pad * 2)) / Math.max(values.length - 1, 1);
+      const y = h - pad - ((v - min) / span) * (h - pad * 2);
+      ctx.beginPath();
+      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.fillStyle = '#5a6360';
+    ctx.font = '12px "Source Sans 3", sans-serif';
     ctx.fillText(String(max), 4, pad);
     ctx.fillText(String(min), 4, h - 8);
   }

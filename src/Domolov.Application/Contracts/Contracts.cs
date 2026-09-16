@@ -92,7 +92,8 @@ public sealed record ListingResponse(
     string Currency,
     DateTimeOffset FirstSeenAt,
     DateTimeOffset LastSeenAt,
-    bool IsBookmarked
+    bool IsBookmarked,
+    decimal? PreviousPrice = null
 );
 
 /// <summary>Result of wiping every listing.</summary>

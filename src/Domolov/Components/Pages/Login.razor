@@ -1,4 +1,5 @@
 @page "/login"
+@layout LoginLayout
 @using Domolov
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
@@ -6,30 +7,35 @@
 @inject IStringLocalizer<SharedResources> L
 @inject NavigationManager Navigation
 
-<PageTitle>@L["Login"]</PageTitle>
+<PageTitle>@L["Login"] — @L["AppName"]</PageTitle>
 
-<h1>@L["Login"]</h1>
+<div class="login-hero">
+    <div class="login-hero__panel">
+        <h1 class="login-hero__brand">@L["AppName"]</h1>
+        <p class="login-hero__tagline">@L["HomeIntro"]</p>
+        <p class="login-hero__self-link"><a href="login">@L["Login"]</a></p>
 
-@if (ShowError)
-{
-    <p class="text-danger">@L["LoginFailed"]</p>
-}
+        @if (ShowError)
+        {
+            <p class="text-danger login-hero__error">@L["LoginFailed"]</p>
+        }
 
-<form method="post" action="/auth/login" data-enhance="false">
-    <AntiforgeryToken />
-    <div class="mb-3">
-        <label class="form-label" for="password">@L["Password"]</label>
-        <input
-            id="password"
-            name="password"
-            type="password"
-            class="form-control"
-            required
-            autocomplete="current-password"
-        />
+        <form method="post" action="/auth/login" data-enhance="false">
+            <AntiforgeryToken />
+            <div>
+                <label for="password">@L["Password"]</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                />
+            </div>
+            <button class="login-hero__submit" type="submit">@L["SignIn"]</button>
+        </form>
     </div>
-    <button class="btn btn-primary" type="submit">@L["SignIn"]</button>
-</form>
+</div>
 
 @code {
     [CascadingParameter]

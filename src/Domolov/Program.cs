@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -42,6 +43,7 @@ builder.Host.UseSerilog(
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddMudServices();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
@@ -160,6 +162,10 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+
+app.MapGet("/results", () => Results.Redirect("/listings", permanent: true));
+
+app.MapGet("/bookmarks", () => Results.Redirect("/listings?bookmarked=1", permanent: false));
 
 // Cookie login for the Blazor login form (full document POST + antiforgery).
 app.MapPost(
@@ -383,6 +389,26 @@ api.MapGet(
     )
     .WithName("ListListings");
 
+api.MapGet(
+        "/listings/newest",
+        async Task<Ok<IReadOnlyList<ListingResponse>>> (
+            int? take,
+            IListingQueryService listings,
+            CancellationToken ct
+        ) => TypedResults.Ok(await listings.GetNewestAsync(take ?? 24, ct))
+    )
+    .WithName("ListNewestListings");
+
+api.MapGet(
+        "/listings/price-drops",
+        async Task<Ok<IReadOnlyList<ListingResponse>>> (
+            int? take,
+            IListingQueryService listings,
+            CancellationToken ct
+        ) => TypedResults.Ok(await listings.GetPriceDropsAsync(take ?? 24, ct))
+    )
+    .WithName("ListPriceDropListings");
+
 api.MapDelete(
         "/listings",
         async Task<Ok<DeleteAllListingsResponse>> (
@@ -435,7 +461,7 @@ api.MapGet("/settings", (ISettingsService settings) => TypedResults.Ok(settings.
 
 api.MapPost(
         "/culture",
-        (string culture, HttpContext http) =>
+        (string culture, string? returnUrl, HttpContext http) =>
         {
             if (culture is not ("sl-SI" or "en" or "sl" or "en-US"))
             {
@@ -450,7 +476,13 @@ api.MapPost(
                 CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(value)),
                 new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
             );
-            return Results.NoContent();
+            var target = string.IsNullOrWhiteSpace(returnUrl) ? "/settings" : returnUrl;
+            if (!target.StartsWith('/'))
+            {
+                target = "/settings";
+            }
+
+            return Results.Redirect(target);
         }
     )
     .AllowAnonymous()

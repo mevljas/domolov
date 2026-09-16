@@ -3,7 +3,7 @@
 | Setting | Value |
 |---------|-------|
 | **Interactivity Mode** | Server |
-| **Interactivity Scope** | Per-page |
+| **Interactivity Scope** | Router (`Routes`) + MudBlazor shell |
 | **Target framework** | net10.0 |
 | **Database** | PostgreSQL (EF Core) |
 | **Scraping** | Microsoft.Playwright (headed Chromium + Xvfb in Docker) |
@@ -14,7 +14,7 @@ Read [CONTEXT.md](./CONTEXT.md) before renaming entities or inventing synonyms.
 
 ## Rendering
 
-Pages are static SSR by default. Add `@rendermode InteractiveServer` only where interactivity is required (forms, charts, live actions).
+The Blazor router (`Routes`) uses Interactive Server so MudBlazor layout providers work. Prefer keeping interactivity at the shell; avoid adding extra circuits without reason. Login stays a plain HTML form (SSR-friendly auth contracts).
 
 ## Architecture
 

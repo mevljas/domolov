@@ -7,18 +7,32 @@
   <data name="AppName" xml:space="preserve"><value>Domolov</value></data>
   <data name="HomeIntro" xml:space="preserve"><value>Lov na dom. Spremljaj iskalne URL-je, cene in prejemaj obvestila.</value></data>
   <data name="Loading" xml:space="preserve"><value>Nalaganje…</value></data>
-  <data name="NoWatches" xml:space="preserve"><value>Še ni nobenega iskanja. Ustvari ga pod</value></data>
+  <data name="NoWatches" xml:space="preserve"><value>Še ni nobenega spremljanja. Ustvari ga pod</value></data>
   <data name="NavHome" xml:space="preserve"><value>Domov</value></data>
-  <data name="NavWatches" xml:space="preserve"><value>Iskanja</value></data>
-  <data name="NavResults" xml:space="preserve"><value>Rezultati</value></data>
+  <data name="NavWatches" xml:space="preserve"><value>Spremljanja</value></data>
+  <data name="NavListings" xml:space="preserve"><value>Oglasi</value></data>
+  <data name="NavResults" xml:space="preserve"><value>Oglasi</value></data>
   <data name="NavBookmarks" xml:space="preserve"><value>Zaznamki</value></data>
-  <data name="NavScans" xml:space="preserve"><value>Zgodovina skenov</value></data>
+  <data name="NavScans" xml:space="preserve"><value>Skeni</value></data>
   <data name="NavSettings" xml:space="preserve"><value>Nastavitve</value></data>
+  <data name="HuntNewest" xml:space="preserve"><value>Najnovejši</value></data>
+  <data name="HuntPriceDrops" xml:space="preserve"><value>Padci cen</value></data>
+  <data name="HuntEmptyNewest" xml:space="preserve"><value>Še ni novih oglasov.</value></data>
+  <data name="HuntEmptyDrops" xml:space="preserve"><value>Še ni padcev cen.</value></data>
+  <data name="WatchHealth" xml:space="preserve"><value>Tvoja spremljanja</value></data>
+  <data name="BookmarkedOnly" xml:space="preserve"><value>Samo zaznamki</value></data>
+  <data name="ConfirmDeleteWatch" xml:space="preserve"><value>Izbrisati to spremljanje? Zgodovina skenov ostane.</value></data>
+  <data name="ConfirmDeleteRoute" xml:space="preserve"><value>Izbrisati to pot obvestil?</value></data>
+  <data name="RecentScans" xml:space="preserve"><value>Nedavni skeni</value></data>
+  <data name="NoScans" xml:space="preserve"><value>Še ni skenov.</value></data>
+  <data name="ListingNotFound" xml:space="preserve"><value>Oglas ni najden.</value></data>
+  <data name="PriceDropFrom" xml:space="preserve"><value>Prej {0}</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Prekliči</value></data>
   <data name="Login" xml:space="preserve"><value>Prijava</value></data>
   <data name="Password" xml:space="preserve"><value>Geslo</value></data>
   <data name="SignIn" xml:space="preserve"><value>Prijava</value></data>
   <data name="LoginFailed" xml:space="preserve"><value>Napačno geslo.</value></data>
-  <data name="CreateWatch" xml:space="preserve"><value>Novo iskanje</value></data>
+  <data name="CreateWatch" xml:space="preserve"><value>Novo spremljanje</value></data>
   <data name="Name" xml:space="preserve"><value>Ime</value></data>
   <data name="SearchUrl" xml:space="preserve"><value>URL iskanja</value></data>
   <data name="Save" xml:space="preserve"><value>Shrani</value></data>
@@ -30,18 +44,18 @@
   <data name="NotificationRoutes" xml:space="preserve"><value>Poti obvestil</value></data>
   <data name="Destination" xml:space="preserve"><value>Cilj</value></data>
   <data name="AddRoute" xml:space="preserve"><value>Dodaj pot</value></data>
-  <data name="FilterWatch" xml:space="preserve"><value>Filtriraj po iskanju</value></data>
-  <data name="AllWatches" xml:space="preserve"><value>Vsa iskanja</value></data>
+  <data name="FilterWatch" xml:space="preserve"><value>Filtriraj po spremljanju</value></data>
+  <data name="AllWatches" xml:space="preserve"><value>Vsa spremljanja</value></data>
   <data name="Bookmark" xml:space="preserve"><value>Zaznamek</value></data>
   <data name="Unbookmark" xml:space="preserve"><value>Odstrani zaznamek</value></data>
   <data name="OpenOriginal" xml:space="preserve"><value>Odpri oglas</value></data>
   <data name="Listing" xml:space="preserve"><value>Oglas</value></data>
   <data name="PriceHistory" xml:space="preserve"><value>Zgodovina cen</value></data>
   <data name="NoBookmarks" xml:space="preserve"><value>Še ni zaznamkov.</value></data>
-  <data name="NoResults" xml:space="preserve"><value>Še ni rezultatov.</value></data>
-  <data name="DeleteAllResults" xml:space="preserve"><value>Izbriši vse rezultate</value></data>
-  <data name="DeleteAllResultsConfirm" xml:space="preserve"><value>Izbrisati vse oglase? Cene, opažanja in zaznamki bodo odstranjeni. Iskanja ostanejo.</value></data>
-  <data name="Watch" xml:space="preserve"><value>Iskanje</value></data>
+  <data name="NoResults" xml:space="preserve"><value>Še ni oglasov.</value></data>
+  <data name="DeleteAllResults" xml:space="preserve"><value>Izbriši vse oglase</value></data>
+  <data name="DeleteAllResultsConfirm" xml:space="preserve"><value>Izbrisati vse oglase? Cene, opažanja in zaznamki bodo odstranjeni. Spremljanja ostanejo.</value></data>
+  <data name="Watch" xml:space="preserve"><value>Spremljanje</value></data>
   <data name="Status" xml:space="preserve"><value>Status</value></data>
   <data name="QueuedAt" xml:space="preserve"><value>V čakalni vrsti</value></data>
   <data name="New" xml:space="preserve"><value>Novo</value></data>

@@ -1,23 +1,39 @@
 ﻿@inherits LayoutComponentBase
+@using Domolov.Theming
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider Theme="DomolovTheme.Default" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Class="domolov-appbar" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="domolov-brand">Domolov</MudText>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen"
+               Elevation="1"
+               Variant="@DrawerVariant.Responsive"
+               ClipMode="DrawerClipMode.Never"
+               Class="domolov-drawer"
+               Breakpoint="Breakpoint.Md">
         <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+    </MudDrawer>
+    <MudMainContent Class="domolov-main">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6 px-4 px-md-6">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}

@@ -1,14 +1,6 @@
 .listing-detail__price {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #0b3d2e;
-    margin: 0.25rem 0 0.5rem;
+    color: var(--domolov-price, #0b3d2e);
     letter-spacing: -0.02em;
-}
-
-.listing-detail__attrs {
-    color: #6c757d;
-    font-size: 0.95rem;
 }
 
 .listing-detail__image {
@@ -16,9 +8,20 @@
     max-width: min(100%, 640px);
     height: auto;
     margin: 1rem 0;
+    border-radius: 8px;
 }
 
 .listing-detail__desc {
     max-width: 42rem;
     line-height: 1.45;
+    margin-top: 1rem;
+}
+
+.listing-detail__chart {
+    max-width: 100%;
+    height: auto;
+    background: #fffefb;
+    border: 1px solid #c9d2cb;
+    border-radius: 8px;
+    padding: 0.5rem;
 }
