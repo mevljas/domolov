@@ -69,6 +69,10 @@
         align-items: center;
         line-height: 3rem;
         width: 100%;
+        padding: 0 1rem;
+        text-align: left;
+        cursor: pointer;
+        font: inherit;
     }
 
 .nav-item ::deep a.active {

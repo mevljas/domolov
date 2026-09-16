@@ -1,8 +1,10 @@
 @page "/login"
 @using Domolov
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @attribute [AllowAnonymous]
 @inject IStringLocalizer<SharedResources> L
+@inject NavigationManager Navigation
 
 <PageTitle>@L["Login"]</PageTitle>
 
@@ -30,6 +32,23 @@
 </form>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
     [SupplyParameterFromQuery(Name = "error")]
     public bool ShowError { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateTask is null)
+        {
+            return;
+        }
+
+        var state = await AuthenticationStateTask;
+        if (state.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
 }

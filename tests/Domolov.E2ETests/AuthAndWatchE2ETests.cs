@@ -213,6 +213,82 @@ public sealed class AuthAndWatchE2ETests : IClassFixture<DomolovWebApplicationFa
         home.Headers.Location?.ToString().Should().Contain("/login");
     }
 
+    [Fact]
+    public async Task Nav_shows_sign_in_when_anonymous_and_sign_out_when_authenticated()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        var loginPage = await client.GetAsync("/login");
+        loginPage.StatusCode.Should().Be(HttpStatusCode.OK);
+        var anonymousHtml = await loginPage.Content.ReadAsStringAsync();
+        anonymousHtml.Should().Contain("href=\"login\"");
+        anonymousHtml.Should().NotContain("action=\"/auth/logout\"");
+
+        var loginPost = await PostCookieLoginAsync(client, "changeme");
+        loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
+
+        var home = await client.GetAsync("/");
+        home.StatusCode.Should().Be(HttpStatusCode.OK);
+        var authenticatedHtml = await home.Content.ReadAsStringAsync();
+        authenticatedHtml.Should().Contain("action=\"/auth/logout\"");
+        authenticatedHtml.Should().Contain("data-enhance=\"false\"");
+        authenticatedHtml
+            .Should()
+            .Contain("__RequestVerificationToken", "logout form must emit an antiforgery token");
+        authenticatedHtml.Should().NotContain("href=\"login\"");
+    }
+
+    [Fact]
+    public async Task Cookie_logout_clears_auth_and_redirects_to_login()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        var loginPost = await PostCookieLoginAsync(client, "changeme");
+        loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
+
+        var home = await client.GetAsync("/");
+        home.StatusCode.Should().Be(HttpStatusCode.OK);
+        var html = await home.Content.ReadAsStringAsync();
+        var token = AntiforgeryTokenRegex.Match(html).Groups[1].Value;
+        token.Should().NotBeNullOrWhiteSpace();
+
+        using var content = new FormUrlEncodedContent(
+            new Dictionary<string, string> { ["__RequestVerificationToken"] = token }
+        );
+        var logout = await client.PostAsync("/auth/logout", content);
+        logout.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        logout.Headers.Location?.ToString().Should().Be("/login");
+
+        var afterLogout = await client.GetAsync("/");
+        afterLogout.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        afterLogout.Headers.Location?.ToString().Should().Contain("/login");
+
+        var loginAgain = await client.GetAsync("/login");
+        loginAgain.StatusCode.Should().Be(HttpStatusCode.OK);
+        var loginHtml = await loginAgain.Content.ReadAsStringAsync();
+        loginHtml.Should().Contain("href=\"login\"");
+        loginHtml.Should().NotContain("action=\"/auth/logout\"");
+    }
+
+    [Fact]
+    public async Task Login_page_redirects_home_when_already_authenticated()
+    {
+        var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false }
+        );
+
+        var loginPost = await PostCookieLoginAsync(client, "changeme");
+        loginPost.StatusCode.Should().Be(HttpStatusCode.Redirect);
+
+        var loginPage = await client.GetAsync("/login");
+        loginPage.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        loginPage.Headers.Location?.ToString().Should().BeOneOf("/", "http://localhost/");
+    }
+
     private static async Task<HttpResponseMessage> PostCookieLoginAsync(
         HttpClient client,
         string password

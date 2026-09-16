@@ -198,6 +198,19 @@ app.MapPost(
     .WithName("CookieLogin")
     .WithSummary("Sign in via HTML form and set the auth cookie");
 
+// Cookie logout for the Blazor nav form (full document POST + antiforgery).
+app.MapPost(
+        "/auth/logout",
+        async (HttpContext http) =>
+        {
+            await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Results.Redirect("/login");
+        }
+    )
+    .AllowAnonymous()
+    .WithName("CookieLogout")
+    .WithSummary("Sign out via HTML form and clear the auth cookie");
+
 var api = app.MapGroup("/api").RequireAuthorization();
 
 api.MapPost(
