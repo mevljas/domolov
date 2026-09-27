@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Production image: headless Chromium shell only (no full Chromium, no Xvfb).
-# Headed scraping lives in Dockerfile.dev.
+# Dev image: headed Chromium under Xvfb. Use via docker-compose.dev.yml.
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG TARGETARCH
@@ -14,8 +13,6 @@ COPY src/Domolov/Domolov.csproj src/Domolov/
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet restore src/Domolov/Domolov.csproj -a $TARGETARCH
 COPY src/ src/
-# A RID-specific publish keeps only this platform's Playwright Node driver.
-# BuildHost-* come from EF Core Design (needed by dotnet-ef, not at runtime).
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish src/Domolov/Domolov.csproj -c Release -a $TARGETARCH --self-contained false \
     --no-restore -o /app/publish /p:UseAppHost=false \
@@ -25,26 +22,16 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 ENV ASPNETCORE_URLS=http://+:8080 \
-    DOMOLOV_BROWSER_HEADLESS=true \
+    DOMOLOV_BROWSER_HEADLESS=false \
     DOMOLOV_BROWSER_USER_DATA_DIR=/data/browser-profile \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 COPY --from=build /app/publish .
 COPY docker/entrypoint.sh /entrypoint.sh
-# The bundled Playwright driver node runs the installer, so no apt nodejs is needed.
-# Package list is Playwright's ubuntu24.04 "chromium" deps without its "tools" group
-# (xvfb, X bitmap fonts, CJK/Thai fonts); must match the aspnet base's Ubuntu release.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libasound2t64 libatk-bridge2.0-0t64 libatk1.0-0t64 libatspi2.0-0t64 libcairo2 \
-        libcups2t64 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0t64 libnspr4 libnss3 \
-        libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
-        libxkbcommon0 libxrandr2 libfontconfig1 libfreetype6 \
-        fonts-liberation fonts-freefont-ttf fonts-noto-color-emoji \
-    # libgbm1 only dlopens the Mesa backend for a GPU; headless shell renders via bundled SwiftShader.
-    && dpkg --remove --force-depends mesa-libgallium libllvm20 \
-    && ./.playwright/node/*/node ./.playwright/package/cli.js install --only-shell chromium \
-    && rm -rf /var/lib/apt/lists/* /ms-playwright/ffmpeg-* \
+    && ./.playwright/node/*/node ./.playwright/package/cli.js install --with-deps --no-shell chromium \
+    && apt-get install -y --no-install-recommends xvfb \
+    && rm -rf /var/lib/apt/lists/* \
     && sed -i 's/\r$//' /entrypoint.sh \
     && chmod +x /entrypoint.sh \
     && mkdir -p /data/browser-profile /app/logs

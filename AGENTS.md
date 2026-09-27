@@ -6,7 +6,7 @@
 | **Interactivity Scope** | Router (`Routes`) + MudBlazor shell |
 | **Target framework** | net10.0 |
 | **Database** | PostgreSQL (EF Core) |
-| **Scraping** | Microsoft.Playwright (headed Chromium + Xvfb in Docker) |
+| **Scraping** | Microsoft.Playwright (headless shell in prod image; headed Chromium + Xvfb via `Dockerfile.dev`) |
 
 ## Domain language
 

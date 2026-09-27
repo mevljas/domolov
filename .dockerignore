@@ -9,3 +9,11 @@
 *.user
 *.suo
 .env
+tests/
+docs/
+deploy/
+.github/
+.cursor/
+**/*.md
+docker-compose*.yml
+Dockerfile*

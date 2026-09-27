@@ -1,0 +1,10 @@
+# Headed Chromium + Xvfb. Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+services:
+  domolov:
+    image: domolov:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      DOMOLOV_BROWSER_HEADLESS: "false"

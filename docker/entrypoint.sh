@@ -5,6 +5,11 @@ if [ "${DOMOLOV_BROWSER_HEADLESS:-false}" = "true" ]; then
   exec dotnet Domolov.dll "$@"
 fi
 
+if ! command -v Xvfb >/dev/null 2>&1; then
+  echo "DOMOLOV_BROWSER_HEADLESS=false: headed mode needs Dockerfile.dev; this image is headless-only" >&2
+  exit 1
+fi
+
 # Do not use xvfb-run as PID 1: it waits for SIGUSR1 from Xvfb, and that
 # signal is not delivered to PID 1 in Docker, so the app never starts.
 DISPLAY_NUM="${XVFB_DISPLAY_NUM:-99}"

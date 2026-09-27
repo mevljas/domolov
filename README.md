@@ -29,6 +29,14 @@ docker compose up -d
 
 Open http://localhost:8080 and sign in with the admin password.
 
+### Headed dev image
+
+The published image ships only the headless Chromium shell. For headed Chromium under Xvfb (e.g. to debug Cloudflare behavior), build the dev image:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
 ## Local development
 
 Requires .NET 10 SDK (system-wide or project-local via `./install-dotnet.ps1` / `./install-dotnet.sh`).
@@ -66,7 +74,7 @@ DOMOLOV_LOG_LEVEL=Information
 | `DOMOLOV_MAX_CONCURRENT_SCANS` | Parallel Playwright scans | `1` |
 | `DOMOLOV_SCAN_COOLDOWN_MS` | Delay after each ScanRun before the next can start (CF pacing) | `20000` |
 | `DOMOLOV_CLOUDFLARE_CHALLENGE_WAIT_MS` | Max wait for a CloudflareChallenge to clear before CloudflareBlock | `30000` |
-| `DOMOLOV_BROWSER_HEADLESS` | Headless Chromium (local debug) | `false` in prod images |
+| `DOMOLOV_BROWSER_HEADLESS` | Headless Chromium shell; `false` = headed Chromium (needs `Dockerfile.dev` in Docker) | `true` |
 | `DOMOLOV_BROWSER_USER_DATA_DIR` | Persistent browser profile path | `/data/browser-profile` |
 
 After container recreate, Domolov clears stale Chromium `Singleton*` locks in that directory automatically. If scans still fail with “profile appears to be in use”, remove the Compose/K8s browser-profile volume and start again.
