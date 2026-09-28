@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
   await presetPreferences(page, { locale: 'en' })
 })
 
-test('desktop sidebar navigates between placeholder routes', async ({ page, isMobile }) => {
+test('desktop sidebar navigates between the main sections', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop layout only')
   await page.goto('/')
   const nav = page.getByRole('navigation', { name: 'Main' })
@@ -25,7 +25,6 @@ test('desktop sidebar navigates between placeholder routes', async ({ page, isMo
     await expect(page).toHaveURL(new RegExp(`${destination.path}$`))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(destination.heading)
     await expect(nav.getByTestId(`nav-${destination.key}`)).toHaveAttribute('aria-current', 'page')
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText('This part is being rebuilt')
   }
   await expect(page).toHaveTitle('Dashboard · Domolov')
 })
@@ -34,9 +33,9 @@ test('detail routes highlight their parent section and link back', async ({ page
   test.skip(isMobile, 'desktop layout only')
   await page.goto('/watches/42')
 
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Watch')
+  await expect(page.getByRole('heading', { level: 2 })).toHaveText('Watch not found.')
   await expect(page.getByTestId('nav-watches')).toHaveAttribute('aria-current', 'true')
-  await page.getByRole('link', { name: 'Watches' }).first().click()
+  await page.getByTestId('nav-watches').click()
   await expect(page).toHaveURL(/\/watches$/)
 })
 
