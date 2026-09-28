@@ -10,19 +10,19 @@ Vue 3 single-page app for Domolov (the self-hosted real-estate hunter). It talks
 
 ## Scripts
 
-| Script                         | What it does                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------ |
-| `pnpm dev`                     | Vite dev server on :5173; proxies `/api` and `/health` to `http://localhost:5080`    |
-| `pnpm build`                   | `vue-tsc -b && vite build` → `dist/` (includes `sw.js` and `manifest.webmanifest`)   |
-| `pnpm preview`                 | Serve `dist/` on :4173                                                               |
-| `pnpm lint` / `lint:fix`       | ESLint (flat config: eslint-plugin-vue, typescript-eslint, eslint-config-prettier)   |
-| `pnpm format` / `format:check` | Prettier (with the Tailwind class sorter)                                            |
-| `pnpm typecheck`               | `vue-tsc -b` across app, service worker, node and test configs                       |
-| `pnpm test`                    | Vitest (jsdom, msw)                                                                  |
-| `pnpm test:coverage`           | Vitest with v8 coverage; 80% line threshold on `src/shared/lib` and `**/composables` |
-| `pnpm e2e`                     | Playwright against `vite preview`, API mocked with `page.route` (desktop + Pixel 7)  |
-| `pnpm gen:api`                 | `openapi/domolov.json` → `src/api/schema.d.ts` (openapi-typescript)                  |
-| `pnpm gen:pwa-assets`          | Regenerate PWA icons in `public/` from `public/favicon.svg`                          |
+| Script                         | What it does                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `pnpm dev`                     | Vite dev server on :5173; proxies `/api` and `/health` to `http://localhost:5080`                      |
+| `pnpm build`                   | `vue-tsc -b && vite build` → `dist/` (includes `sw.js` and `manifest.webmanifest`)                     |
+| `pnpm preview`                 | Serve `dist/` on :4173                                                                                 |
+| `pnpm lint` / `lint:fix`       | ESLint (flat config: eslint-plugin-vue, typescript-eslint, eslint-config-prettier)                     |
+| `pnpm format` / `format:check` | Prettier (with the Tailwind class sorter)                                                              |
+| `pnpm typecheck`               | `vue-tsc -b` across app, service worker, node and test configs                                         |
+| `pnpm test`                    | Vitest (jsdom, msw)                                                                                    |
+| `pnpm test:coverage`           | Vitest with v8 coverage; 80% lines on `src/shared/lib`, `src/shared/composables`, and `useHomeFilters` |
+| `pnpm e2e`                     | Playwright against `vite preview`, API mocked with `page.route` (desktop + Pixel 7)                    |
+| `pnpm gen:api`                 | `openapi/domolov.json` → `src/api/schema.d.ts` (openapi-typescript)                                    |
+| `pnpm gen:pwa-assets`          | Regenerate PWA icons in `public/` from `public/favicon.svg`                                            |
 
 First Playwright run: `pnpm exec playwright install chromium`.
 

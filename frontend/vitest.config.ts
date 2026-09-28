@@ -16,7 +16,13 @@ export default mergeConfig(
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html', 'lcov'],
-        include: ['src/shared/lib/**/*.ts', 'src/**/composables/**/*.ts'],
+        // Route composables (home detail, watch detail, scan events) are covered by
+        // Playwright. The unit gate stays on shared code and the tested homes filter.
+        include: [
+          'src/shared/lib/**/*.ts',
+          'src/shared/composables/**/*.ts',
+          'src/features/homes/composables/useHomeFilters.ts',
+        ],
         exclude: ['src/**/*.test.ts', 'src/**/index.ts'],
         thresholds: {
           lines: 80,
