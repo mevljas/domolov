@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [0004](0004-vue-spa-same-origin-proxy.md)
 
 ## Context
 

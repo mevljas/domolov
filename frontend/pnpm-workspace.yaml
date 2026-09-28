@@ -1,0 +1,9 @@
+allowBuilds:
+  msw: false
+  vue-demi: false
+minimumReleaseAgeExclude:
+  - motion-v@2.5.0
+peerDependencyRules:
+  allowedVersions:
+    # Verified: `pnpm gen:api` works on TypeScript 6; the published peer range still says ^5.
+    openapi-typescript>typescript: '6'

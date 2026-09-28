@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: domolov-web
+spec:
+  selector:
+    app.kubernetes.io/name: domolov
+    app.kubernetes.io/component: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

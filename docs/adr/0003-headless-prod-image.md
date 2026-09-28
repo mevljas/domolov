@@ -1,11 +1,19 @@
 # Production image ships only the headless Chromium shell
 
-The published image (`Dockerfile`, `ghcr.io/mevljas/domolov`) installs Playwright's `chromium-headless-shell` only, with no full Chromium, Xvfb, or apt Node, and defaults to `DOMOLOV_BROWSER_HEADLESS=true`. It also installs an explicit apt list (no Xvfb, no CJK/X bitmap fonts) and drops Mesa, which the headless shell never loads. This takes the image from about 1.75 GB to about 0.8 GB. Headed Chromium under Xvfb lives in `Dockerfile.dev` (via `docker-compose.dev.yml`) for debugging; the prod image refuses to start headed rather than silently falling back.
+## Status
 
-We accept that headless may be fingerprinted more readily by Cloudflare. The switch is gated on a manual ScanRun against nepremicnine.net that succeeds on the headless image; a CloudflareBlock regression that the headed `Dockerfile.dev` image does not hit is the trigger to revisit.
+Superseded by [0005](0005-api-worker-split-listen-notify.md) (separate api / worker images) and [0006](0006-new-headless-chromium-and-human-pacing.md) (full Chromium in new headless mode).
 
-## Considered options
+## Context
 
-- **Alpine**: rejected. Playwright's bundled Chromium is glibc-linked and `install-deps` is apt-only; the Alpine `chromium` package would drift from the Chromium version Playwright pins and is unsupported.
-- **Chiseled / distroless**: rejected. No shell or package manager, so the ~100 shared libraries the headless shell needs would have to be hand-copied, which is fragile for about 80 MB of savings.
-- **Split web/worker images**: deferred. Most deployments run `DOMOLOV_ROLE=all`, so one image is simpler.
+The first published image (`Dockerfile`, `ghcr.io/mevljas/domolov`) installed Playwright's `chromium-headless-shell` only — no full Chromium, Xvfb, or apt Node — and defaulted to `DOMOLOV_BROWSER_HEADLESS=true`. That cut the image from about 1.75 GB to about 0.8 GB. Headed Chromium under Xvfb lived in `Dockerfile.dev`. The prod image refused to start headed rather than silently falling back.
+
+We accepted that the shell is easier for Cloudflare to fingerprint. The gate to revisit was a CloudflareBlock on the headless image that the headed image did not hit.
+
+## Decision (historical)
+
+Ship one image with the headless shell. Keep a headed debug image. Do not use Alpine (Playwright's Chromium is glibc), chiseled/distroless (too many libraries to copy by hand), or split web/worker images yet (`DOMOLOV_ROLE=all` was the common case).
+
+## Why it was superseded
+
+The worker is now its own image (ADR 0005), so the API no longer pays for a browser. The shell reported `HeadlessChrome` in client hints while the UA string did not, which is a stronger bot signal than a slightly larger worker (ADR 0006). The production worker therefore installs full Chromium (`--with-deps --no-shell`) and runs new headless mode. Headed Chromium + Xvfb stays in `Dockerfile.dev`. Images today: `domolov-api` (no browser), `domolov-worker` (full Chromium), `domolov-web` (nginx + SPA).

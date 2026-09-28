@@ -1,0 +1,116 @@
+# Single scheduler + Chromium. No Service: nothing calls the worker except its probes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: domolov-worker
+spec:
+  replicas: 1
+  # The ReadWriteOnce profile PVC cannot be mounted by an old and a new pod at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: domolov
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: domolov
+        app.kubernetes.io/component: worker
+    spec:
+      # Lets a running ScanRun finish or cancel cleanly before SIGKILL.
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        # Makes the freshly provisioned profile volume writable by the app user.
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: migrate
+          image: ghcr.io/mevljas/domolov-api:latest
+          args: ["migrate"]
+          envFrom:
+            - configMapRef:
+                name: domolov-config
+            - secretRef:
+                name: domolov-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      containers:
+        - name: worker
+          image: ghcr.io/mevljas/domolov-worker:latest
+          env:
+            - name: DOMOLOV_ROLE
+              value: worker
+            - name: DOMOLOV_BROWSER_USER_DATA_DIR
+              value: /data/browser-profile
+          envFrom:
+            - configMapRef:
+                name: domolov-config
+            - secretRef:
+                name: domolov-secrets
+          ports:
+            - name: http
+              containerPort: 8080
+          # Chromium writes caches under $HOME and /tmp, so the root filesystem stays writable.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: browser-profile
+              mountPath: /data/browser-profile
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            requests:
+              cpu: 250m
+              memory: 768Mi
+            # /dev/shm (memory-backed) counts against this limit.
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 3
+      volumes:
+        - name: browser-profile
+          persistentVolumeClaim:
+            claimName: domolov-browser-profile
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+        - name: tmp
+          emptyDir: {}

@@ -1,5 +1,6 @@
-using Domolov.Domain.Enums;
-using Domolov.Domain.Services;
+using Domolov.Domain.Listings;
+using Domolov.Domain.Notifications;
+using Domolov.Domain.Providers.Nepremicnine;
 using FluentAssertions;
 
 namespace Domolov.UnitTests;
@@ -113,26 +114,6 @@ public sealed class NepremicnineParsingTests
             .Should()
             .BeTrue();
         NepremicnineParsing.IsNepremicnineHost(new Uri("https://example.com")).Should().BeFalse();
-    }
-}
-
-public sealed class WatchScheduleTests
-{
-    [Fact]
-    public void IsDue_when_never_scanned_and_cron_hourly()
-    {
-        var tz = TimeZoneInfo.Utc;
-        var now = DateTimeOffset.Parse("2026-08-30T12:05:00Z");
-        WatchSchedule.IsDue("0 * * * *", null, now, tz).Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsDue_false_immediately_after_scan()
-    {
-        var tz = TimeZoneInfo.Utc;
-        var now = DateTimeOffset.Parse("2026-08-30T12:05:00Z");
-        var last = DateTimeOffset.Parse("2026-08-30T12:00:00Z");
-        WatchSchedule.IsDue("0 * * * *", last, now, tz).Should().BeFalse();
     }
 }
 

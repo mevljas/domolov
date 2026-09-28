@@ -1,0 +1,17 @@
+# Smoke-test / demo overlay: fake listing provider (never touches nepremicnine.net),
+# fixed admin password, fast scan pacing. Used by CI smoke and screenshots jobs.
+#   docker compose -f docker-compose.yml -f docker-compose.smoke.yml up -d --build --wait
+x-smoke-env: &smoke-env
+  DOMOLOV_FAKE_PROVIDER: "true"
+  DOMOLOV_ADMIN_PASSWORD: smoke-password
+  DOMOLOV_ADMIN_PASSWORD_HASH: ""
+  DOMOLOV_SCAN_COOLDOWN_MS: "1000"
+  # The production worker image is headless-only; ignore a headed setting in a local .env.
+  DOMOLOV_BROWSER_HEADLESS: "true"
+
+services:
+  api:
+    environment: *smoke-env
+
+  worker:
+    environment: *smoke-env

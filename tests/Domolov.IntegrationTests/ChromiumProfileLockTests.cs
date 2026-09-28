@@ -1,4 +1,4 @@
-using Domolov.Infrastructure.Providers;
+using Domolov.Infrastructure.Scanning;
 using FluentAssertions;
 
 namespace Domolov.IntegrationTests;

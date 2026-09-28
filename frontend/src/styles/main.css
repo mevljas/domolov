@@ -1,0 +1,378 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Domolov design tokens — "editorial warm".
+ * Raw palette lives on :root / .dark; @theme inline maps it to Tailwind utilities
+ * (bg-background, text-muted-foreground, bg-terracotta-soft, font-display, …).
+ * Text-safe variants (terracotta-foreground, warning-foreground) meet WCAG AA 4.5:1
+ * on paper and surface; the brand terracotta itself is for fills and large numerals.
+ */
+:root {
+  color-scheme: light;
+
+  --radius: 0.75rem;
+
+  --background: #f7f5f0;
+  --foreground: #1b1f1c;
+  --surface: #fffdf9;
+  --elevated: #ffffff;
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+
+  --primary: #1f4d3a;
+  --primary-hover: #173c2d;
+  --primary-foreground: #f7f5f0;
+  --secondary: #e3eadf;
+  --secondary-foreground: #173c2d;
+  --muted: #efebe3;
+  --muted-foreground: #5e665f;
+  --accent: #e3eadf;
+  --accent-foreground: #173c2d;
+
+  --sage: #8fa98f;
+  --sage-soft: #e3eadf;
+  --terracotta: #c4633f;
+  --terracotta-foreground: #a94f2e;
+  --terracotta-soft: #f6e4da;
+  --warning: #b7791f;
+  --warning-foreground: #8a5a12;
+  --warning-soft: #f7ecd6;
+  --success: #2f6b4f;
+  --success-soft: #dfeee4;
+  --info: #3a5a6a;
+  --info-soft: #e1e9ee;
+  --destructive: #a8342a;
+  --destructive-foreground: #ffffff;
+  --destructive-soft: #f5dfdb;
+  --notify: #a94f2e;
+  --notify-foreground: #ffffff;
+
+  --border: #e4dfd4;
+  --input: #8f897c;
+  --ring: #1f4d3a;
+
+  --shadow-color: 36 28% 20%;
+  --grain-opacity: 0.05;
+  --grain-blend: multiply;
+
+  --sidebar: #f1eee6;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: #e6ebe1;
+  --sidebar-accent-foreground: var(--primary-hover);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #0f1f18;
+  --foreground: #f1ece1;
+  --surface: #152a21;
+  --elevated: #1b3429;
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--elevated);
+  --popover-foreground: var(--foreground);
+
+  --primary: #7fb89a;
+  --primary-hover: #95c7ac;
+  --primary-foreground: #0f1f18;
+  --secondary: #23402f;
+  --secondary-foreground: #cfe3d5;
+  --muted: #1b3429;
+  --muted-foreground: #aeb8ad;
+  --accent: #23402f;
+  --accent-foreground: #e4efe6;
+
+  --sage: #8fa98f;
+  --sage-soft: #23402f;
+  --terracotta: #e08a66;
+  --terracotta-foreground: #e08a66;
+  --terracotta-soft: #3a2a20;
+  --warning: #e3b35c;
+  --warning-foreground: #e3b35c;
+  --warning-soft: #3a321d;
+  --success: #7fb89a;
+  --success-soft: #1f3b2f;
+  --info: #9cc0d0;
+  --info-soft: #1e3340;
+  --destructive: #ef8a7a;
+  --destructive-foreground: #0f1f18;
+  --destructive-soft: #3d2320;
+  --notify: #e08a66;
+  --notify-foreground: #0f1f18;
+
+  --border: #2a4537;
+  --input: #5f7f6e;
+  --ring: #7fb89a;
+
+  --shadow-color: 160 60% 2%;
+  --grain-opacity: 0.07;
+  --grain-blend: soft-light;
+
+  --sidebar: #122419;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: #1b3429;
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+/* Brand constants that do not change with the theme (logo, login hero). */
+@theme {
+  --color-forest: #1f4d3a;
+  --color-forest-deep: #173c2d;
+  --color-forest-night: #0f1f18;
+  --color-paper: #f7f5f0;
+  --color-paper-muted: #d9e3da;
+}
+
+@theme inline {
+  --font-sans: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-foreground: var(--terracotta-foreground);
+  --color-terracotta-soft: var(--terracotta-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-notify: var(--notify);
+  --color-notify-foreground: var(--notify-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-xs: 0 1px 2px hsl(var(--shadow-color) / 0.06);
+  --shadow-sm:
+    0 1px 2px hsl(var(--shadow-color) / 0.06), 0 2px 6px -2px hsl(var(--shadow-color) / 0.08);
+  --shadow-md:
+    0 1px 2px hsl(var(--shadow-color) / 0.05), 0 4px 10px -2px hsl(var(--shadow-color) / 0.08),
+    0 12px 24px -8px hsl(var(--shadow-color) / 0.1);
+  --shadow-lg:
+    0 2px 4px hsl(var(--shadow-color) / 0.05), 0 10px 24px -6px hsl(var(--shadow-color) / 0.12),
+    0 28px 56px -16px hsl(var(--shadow-color) / 0.16);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground;
+    min-height: 100dvh;
+    font-size: 1rem;
+    line-height: 1.55;
+    font-feature-settings: 'kern', 'liga';
+  }
+
+  /* Subtle paper grain over the page background; sits behind all content. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-balance;
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Prices and other figures: display face with aligned digits. */
+  .numeric {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum', 'lnum';
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .skip-link {
+    @apply sr-only;
+  }
+
+  .skip-link:focus {
+    @apply not-sr-only fixed top-3 left-3 z-[100] rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground shadow-lg;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Route transitions via the View Transitions API (see useViewTransition). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--ease-out-soft);
+}
+
+::view-transition-old(main-content) {
+  animation: 160ms var(--ease-out-soft) both vt-fade-out;
+}
+
+::view-transition-new(main-content) {
+  animation: 260ms var(--ease-out-soft) both vt-rise-in;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Shared Vue <Transition> presets. */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 180ms var(--ease-out-soft);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.rise-enter-active,
+.rise-leave-active {
+  transition:
+    opacity 220ms var(--ease-out-soft),
+    transform 220ms var(--ease-out-soft);
+}
+
+.rise-enter-from,
+.rise-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition:
+    opacity 220ms var(--ease-out-soft),
+    transform 220ms var(--ease-out-soft);
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.list-leave-active {
+  position: absolute;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

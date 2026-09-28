@@ -1,0 +1,44 @@
+# Annotations target ingress-nginx; translate them for other controllers.
+# They apply to every path here, which is fine: only /api/scans/events needs them.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domolov
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+    # Server-Sent Events (/api/scans/events): no buffering, long-lived streams.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # With cert-manager: cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [domolov.example.com]
+      secretName: domolov-tls
+  rules:
+    - host: domolov.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: domolov-api
+                port:
+                  name: http
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: domolov-api
+                port:
+                  name: http
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: domolov-web
+                port:
+                  name: http

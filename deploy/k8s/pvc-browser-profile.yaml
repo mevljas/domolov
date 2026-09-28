@@ -1,0 +1,11 @@
+# Chromium profile (cookies, Cloudflare clearance) survives worker restarts.
+# ReadWriteOnce: exactly one worker pod may mount it, hence the worker's Recreate strategy.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: domolov-browser-profile
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi

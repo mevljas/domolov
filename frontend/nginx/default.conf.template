@@ -1,0 +1,98 @@
+# Rendered by the nginx image entrypoint (envsubst, DOMOLOV_* only) into /etc/nginx/conf.d/.
+# nginx drops inherited add_header in any location that sets its own, so every location
+# includes a header snippet explicitly.
+
+# Keep the original scheme when a TLS-terminating proxy or ingress sits in front.
+map $http_x_forwarded_proto $domolov_forwarded_proto {
+    default $http_x_forwarded_proto;
+    ""      $scheme;
+}
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+    client_max_body_size 1m;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml application/javascript application/json
+               application/manifest+json application/xml image/svg+xml;
+
+    # Shared by every proxied location. HTTP/1.1 without "Connection: close" is also what SSE needs.
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $domolov_forwarded_proto;
+    proxy_set_header X-Forwarded-Host $host;
+
+    location = /nginx-health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Server-Sent Events: stream each event as it arrives and keep idle streams open.
+    location = /api/scans/events {
+        proxy_pass ${DOMOLOV_API_UPSTREAM};
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
+        gzip off;
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # No CSP here: the API sets its own (the /api/docs UI needs a different policy).
+    location /api/ {
+        proxy_pass ${DOMOLOV_API_UPSTREAM};
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # Prefix, not `/health/`: a bare `/health` must reach the API, not fall through to the SPA.
+    location /health {
+        proxy_pass ${DOMOLOV_API_UPSTREAM};
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # Content-hashed build output: safe to cache forever. Misses must 404, not fall back to the
+    # SPA, and without `always` so a 404 during a rolling deploy is not cached for a year.
+    location /assets/ {
+        try_files $uri =404;
+        include /etc/nginx/snippets/spa-security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Stable URLs that must update on deploy (the service worker especially).
+    location = /index.html {
+        include /etc/nginx/snippets/spa-security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+    }
+
+    location = /sw.js {
+        include /etc/nginx/snippets/spa-security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+    }
+
+    location = /manifest.webmanifest {
+        types { }
+        default_type application/manifest+json;
+        include /etc/nginx/snippets/spa-security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+    }
+
+    # Other public/ files revalidate; unknown paths are client-side routes.
+    location / {
+        try_files $uri /index.html;
+        include /etc/nginx/snippets/spa-security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+    }
+}

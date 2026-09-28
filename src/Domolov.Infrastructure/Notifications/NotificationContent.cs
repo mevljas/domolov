@@ -1,6 +1,6 @@
 using System.Text;
 using Domolov.Application.Abstractions;
-using Domolov.Domain.Services;
+using Domolov.Domain.Common;
 
 namespace Domolov.Infrastructure.Notifications;
 

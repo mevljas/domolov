@@ -1,0 +1,31 @@
+# kubectl apply -k deploy/k8s   (create the domolov-secrets Secret first; see README.md)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: domolov
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: domolov
+    includeSelectors: false
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - pvc-browser-profile.yaml
+  - api-deployment.yaml
+  - api-service.yaml
+  - worker-deployment.yaml
+  - web-deployment.yaml
+  - web-service.yaml
+  - ingress.yaml
+  # secret.example.yaml is deliberately not listed: real credentials never live in this tree.
+
+# Pin releases here (or in an overlay), e.g. newTag: "1.4.0" or a sha-<commit> tag.
+images:
+  - name: ghcr.io/mevljas/domolov-api
+    newTag: latest
+  - name: ghcr.io/mevljas/domolov-worker
+    newTag: latest
+  - name: ghcr.io/mevljas/domolov-web
+    newTag: latest

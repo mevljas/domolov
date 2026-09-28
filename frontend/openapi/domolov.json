@@ -1,0 +1,3997 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Domolov API",
+    "description": "REST API of Domolov, a self-hosted real-estate listing hunter. Sign in with POST /api/session; the session cookie authenticates later calls. State-changing requests must send the header `X-Requested-With: domolov`. Errors use RFC 9457 problem details.",
+    "license": {
+      "name": "MIT"
+    },
+    "version": "v1"
+  },
+  "paths": {
+    "/api/session": {
+      "get": {
+        "tags": [
+          "Session"
+        ],
+        "summary": "Get the current session (401 when signed out)",
+        "operationId": "GetSession",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Session"
+        ],
+        "summary": "Sign in with the operator password; sets the session cookie",
+        "operationId": "SignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Session"
+        ],
+        "summary": "Sign out of this browser",
+        "operationId": "SignOut",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "tags": [
+          "Session"
+        ],
+        "summary": "List active sessions",
+        "operationId": "ListSessions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionListItem"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Session"
+        ],
+        "summary": "Revoke every session, including this one",
+        "operationId": "SignOutEverywhere",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/sessions/{id}": {
+      "delete": {
+        "tags": [
+          "Session"
+        ],
+        "summary": "Revoke one session",
+        "operationId": "RevokeSession",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/watches": {
+      "get": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "List Watches with their routes, last scan and next run",
+        "operationId": "ListWatches",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WatchResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "Create a Watch (optionally with its first notification route); the first scan is queued",
+        "operationId": "CreateWatch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/watches/{id}": {
+      "get": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "Get a Watch (ETag for conditional updates)",
+        "operationId": "GetWatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "Rename, reschedule, change the search URL, or pause/resume a Watch",
+        "operationId": "UpdateWatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "Delete a Watch with its routes, scans and sightings",
+        "operationId": "DeleteWatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/watches/{id}/scans": {
+      "post": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "Queue a scan now (Run now); returns the active ScanRun",
+        "operationId": "RunWatchNow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanRunResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/search-url-checks": {
+      "post": {
+        "tags": [
+          "Watches"
+        ],
+        "summary": "Check whether a pasted search URL is supported and suggest a Watch name",
+        "operationId": "CheckSearchUrl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchUrlCheckRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUrlCheckResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/bookmarks": {
+      "get": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Bookmarked Homes grouped by stage",
+        "operationId": "GetBookmarkBoard",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookmarkBoardResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Headline numbers, Unseen Homes, price drops, Watch health and active scans",
+        "operationId": "GetDashboard",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Read-only server configuration and capability flags",
+        "operationId": "GetSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/watches/{watchId}/notification-routes": {
+      "get": {
+        "tags": [
+          "Notification routes"
+        ],
+        "summary": "List a Watch's notification routes",
+        "operationId": "ListNotificationRoutes",
+        "parameters": [
+          {
+            "name": "watchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationRouteResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Notification routes"
+        ],
+        "summary": "Add a notification route",
+        "operationId": "CreateNotificationRoute",
+        "parameters": [
+          {
+            "name": "watchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationRouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRouteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/watches/{watchId}/notification-routes/{routeId}": {
+      "patch": {
+        "tags": [
+          "Notification routes"
+        ],
+        "summary": "Change a route's destination, triggers or enabled flag",
+        "operationId": "UpdateNotificationRoute",
+        "parameters": [
+          {
+            "name": "watchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "routeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationRouteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRouteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Notification routes"
+        ],
+        "summary": "Delete a route",
+        "operationId": "DeleteNotificationRoute",
+        "parameters": [
+          {
+            "name": "watchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "routeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/watches/{watchId}/notification-routes/{routeId}/test-deliveries": {
+      "post": {
+        "tags": [
+          "Notification routes"
+        ],
+        "summary": "Send a sample notification through the route right now",
+        "operationId": "SendTestNotification",
+        "parameters": [
+          {
+            "name": "watchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "routeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestDeliveryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes": {
+      "get": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "The Homes feed: one card per Home with filters, sorting and paging",
+        "operationId": "SearchHomes",
+        "parameters": [
+          {
+            "name": "WatchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/MarketStatus"
+            }
+          },
+          {
+            "name": "Bookmarked",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Stage",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/BookmarkStage"
+            }
+          },
+          {
+            "name": "Unseen",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Dismissed",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DismissedFilter"
+            }
+          },
+          {
+            "name": "Reposted",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "HasDuplicates",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "MinPrice",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "MaxPrice",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "MinSize",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "MaxSize",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "MaxPricePerM2",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "PropertyType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MinRooms",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/HomeSort"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfHomeSummaryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/{id}": {
+      "get": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "A Home with every ad in its history, price history and possible matches",
+        "operationId": "GetHome",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/{id}/bookmark": {
+      "put": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Bookmark a Home or change its stage and note",
+        "operationId": "SetBookmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBookmarkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookmarkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Remove a Home's Bookmark",
+        "operationId": "RemoveBookmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/{id}/dismissal": {
+      "put": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Dismiss a Home: hidden from feeds and never notified (removes its Bookmark)",
+        "operationId": "DismissHome",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Undo a dismissal",
+        "operationId": "RestoreHome",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/{id}/seen": {
+      "put": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Mark a Home as seen",
+        "operationId": "MarkHomeSeen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/seen": {
+      "post": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Mark every Unseen Home as seen",
+        "operationId": "MarkAllHomesSeen",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAllSeenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/{id}/listings": {
+      "post": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Link another ad to this Home (same home)",
+        "operationId": "LinkListing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkListingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeDetailResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/homes/{id}/listings/{listingId}": {
+      "delete": {
+        "tags": [
+          "Homes"
+        ],
+        "summary": "Split an ad off this Home (not the same home); returns the new Home",
+        "operationId": "UnlinkListing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSummaryResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/home-matches": {
+      "get": {
+        "tags": [
+          "Matches"
+        ],
+        "summary": "Matches to review (possible by default)",
+        "operationId": "ListHomeMatches",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/HomeMatchState"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomeMatchResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/home-matches/{id}": {
+      "patch": {
+        "tags": [
+          "Matches"
+        ],
+        "summary": "Confirm (same home) or reject (different homes) a possible match",
+        "operationId": "ReviewHomeMatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewMatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeMatchResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/listings/{id}": {
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "One ad with its price history",
+        "operationId": "GetListing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/listings": {
+      "delete": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Delete every Listing and Home (danger zone)",
+        "operationId": "DeleteAllListings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteAllListingsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/scans": {
+      "get": {
+        "tags": [
+          "Scans"
+        ],
+        "summary": "ScanRuns, newest first",
+        "operationId": "ListScanRuns",
+        "parameters": [
+          {
+            "name": "watchId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ScanRunStatus"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfScanRunResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/scans/events": {
+      "get": {
+        "tags": [
+          "Scans"
+        ],
+        "summary": "Server-Sent Events: 'scanRun' on every ScanRun change, 'ping' every 25 s",
+        "operationId": "ScanRunEvents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/SseItemOfScanRunResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/scans/{id}": {
+      "get": {
+        "tags": [
+          "Scans"
+        ],
+        "summary": "One ScanRun",
+        "operationId": "GetScanRun",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanRunResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/scans/{id}/artifacts": {
+      "get": {
+        "tags": [
+          "Scans"
+        ],
+        "summary": "Diagnostics captured during a ScanRun (Cloudflare screenshots, HTML, headers)",
+        "operationId": "ListScanArtifacts",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScanArtifactResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/scans/{id}/artifacts/{artifactId}": {
+      "get": {
+        "tags": [
+          "Scans"
+        ],
+        "summary": "Download an artifact",
+        "operationId": "GetScanArtifact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/storage": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Database size, largest tables and cleanup status",
+        "operationId": "GetStorage",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/storage/cleanups": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Ask the worker to run the retention cleanup now",
+        "operationId": "RunCleanupNow",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/push-subscriptions": {
+      "post": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "Store this browser's Web Push subscription",
+        "operationId": "SubscribePush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    },
+    "/api/push-subscriptions/{id}": {
+      "delete": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "Remove a Web Push subscription",
+        "operationId": "UnsubscribePush",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          { }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BookmarkBoardResponse": {
+        "required": [
+          "columns"
+        ],
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookmarkColumnResponse"
+            }
+          }
+        },
+        "description": "The Bookmark board: Homes grouped by stage."
+      },
+      "BookmarkColumnResponse": {
+        "required": [
+          "stage",
+          "homes"
+        ],
+        "type": "object",
+        "properties": {
+          "stage": {
+            "$ref": "#/components/schemas/BookmarkStage"
+          },
+          "homes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSummaryResponse"
+            }
+          }
+        },
+        "description": "One board column."
+      },
+      "BookmarkResponse": {
+        "required": [
+          "stage",
+          "note",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "stage": {
+            "$ref": "#/components/schemas/BookmarkStage"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A Bookmark as returned by the API."
+      },
+      "BookmarkStage": {
+        "enum": [
+          "interested",
+          "contacted",
+          "viewingScheduled",
+          "viewed",
+          "offerMade",
+          "rejected"
+        ],
+        "description": "Where the operator is with a Bookmarked Home. Ordered from least to most advanced."
+      },
+      "CleanupRunResponse": {
+        "required": [
+          "id",
+          "isManual",
+          "startedAt",
+          "finishedAt",
+          "deletedListings",
+          "deletedHomes",
+          "deletedScanRuns",
+          "deletedArtifacts",
+          "deletedSessions",
+          "browserProfileBytes",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isManual": {
+            "type": "boolean"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "deletedListings": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deletedHomes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deletedScanRuns": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deletedArtifacts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deletedSessions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "browserProfileBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A finished or running cleanup."
+      },
+      "CountResponse": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "Number of Homes affected by a bulk operation."
+      },
+      "CreateNotificationRouteRequest": {
+        "required": [
+          "channel",
+          "destination"
+        ],
+        "type": "object",
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "destination": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "triggers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/NotificationTrigger"
+            }
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "description": "Payload for adding a NotificationRoute."
+      },
+      "CreateWatchRequest": {
+        "required": [
+          "name",
+          "searchUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "searchUrl": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "cron": {
+            "maxLength": 100,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isPaused": {
+            "type": "boolean",
+            "default": false
+          },
+          "initialRoute": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CreateNotificationRouteRequest"
+              }
+            ]
+          }
+        },
+        "description": "Payload for creating a Watch, optionally with its first notification route."
+      },
+      "DashboardResponse": {
+        "required": [
+          "stats",
+          "unseen",
+          "priceDrops",
+          "watches",
+          "activeScans"
+        ],
+        "type": "object",
+        "properties": {
+          "stats": {
+            "$ref": "#/components/schemas/DashboardStats"
+          },
+          "unseen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSummaryResponse"
+            }
+          },
+          "priceDrops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSummaryResponse"
+            }
+          },
+          "watches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchResponse"
+            }
+          },
+          "activeScans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScanRunResponse"
+            }
+          }
+        },
+        "description": "Everything the dashboard shows."
+      },
+      "DashboardStats": {
+        "required": [
+          "activeWatches",
+          "pausedWatches",
+          "onMarketHomes",
+          "unseenHomes",
+          "newHomes24h",
+          "priceDrops7d",
+          "reposts7d",
+          "possibleMatches",
+          "bookmarkedHomes"
+        ],
+        "type": "object",
+        "properties": {
+          "activeWatches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pausedWatches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "onMarketHomes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unseenHomes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newHomes24h": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priceDrops7d": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reposts7d": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "possibleMatches": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bookmarkedHomes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "Headline numbers for the dashboard."
+      },
+      "DeleteAllListingsResponse": {
+        "required": [
+          "deleted"
+        ],
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "Number of Listings removed."
+      },
+      "DismissedFilter": {
+        "enum": [
+          "exclude",
+          "include",
+          "only",
+          null
+        ]
+      },
+      "DomolovRole": {
+        "enum": [
+          "all",
+          "api",
+          "worker"
+        ],
+        "description": "Which parts of Domolov this process runs."
+      },
+      "HomeDetailResponse": {
+        "required": [
+          "home",
+          "description",
+          "yearText",
+          "listings",
+          "priceHistory",
+          "timeOnMarketDays",
+          "possibleMatches"
+        ],
+        "type": "object",
+        "properties": {
+          "home": {
+            "$ref": "#/components/schemas/HomeSummaryResponse"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "yearText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeListingResponse"
+            }
+          },
+          "priceHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PricePointResponse"
+            }
+          },
+          "timeOnMarketDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "possibleMatches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeMatchResponse"
+            }
+          }
+        },
+        "description": "Everything the Home page shows."
+      },
+      "HomeListingResponse": {
+        "required": [
+          "id",
+          "providerId",
+          "externalId",
+          "url",
+          "title",
+          "imageUrl",
+          "price",
+          "currency",
+          "firstSeenAt",
+          "lastSeenAt",
+          "delistedAt",
+          "role",
+          "watches"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "price": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "delistedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "role": {
+            "$ref": "#/components/schemas/HomeListingRole"
+          },
+          "watches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchRefResponse"
+            }
+          }
+        },
+        "description": "One ad in the Home's history."
+      },
+      "HomeListingRole": {
+        "enum": [
+          "original",
+          "repost",
+          "duplicate"
+        ],
+        "description": "Role of a Listing within its Home's history."
+      },
+      "HomeMatchResponse": {
+        "required": [
+          "id",
+          "state",
+          "score",
+          "signals",
+          "createdAt",
+          "reviewedAt",
+          "listing",
+          "home",
+          "homePrimaryListing"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "$ref": "#/components/schemas/HomeMatchState"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "signals": {
+            "$ref": "#/components/schemas/MatchSignalsResponse"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "listing": {
+            "$ref": "#/components/schemas/MatchListingResponse"
+          },
+          "home": {
+            "$ref": "#/components/schemas/HomeSummaryResponse"
+          },
+          "homePrimaryListing": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MatchListingResponse"
+              }
+            ]
+          }
+        },
+        "description": "A HomeMatch with both sides for side-by-side review."
+      },
+      "HomeMatchState": {
+        "enum": [
+          "autoLinked",
+          "possible",
+          "confirmed",
+          "rejected"
+        ],
+        "description": "Lifecycle of a HomeMatch."
+      },
+      "HomeSort": {
+        "enum": [
+          "newest",
+          "priceAsc",
+          "priceDesc",
+          "priceDrop",
+          "pricePerM2",
+          "size",
+          "recentlySeen",
+          null
+        ]
+      },
+      "HomeSummaryResponse": {
+        "required": [
+          "id",
+          "title",
+          "imageUrl",
+          "location",
+          "propertyType",
+          "roomCount",
+          "rooms",
+          "sizeM2",
+          "sizeText",
+          "landSizeM2",
+          "landSizeText",
+          "floorText",
+          "yearBuilt",
+          "price",
+          "previousPrice",
+          "currency",
+          "priceChangedAt",
+          "pricePerM2",
+          "firstSeenAt",
+          "lastSeenAt",
+          "offMarketAt",
+          "isUnseen",
+          "isDismissed",
+          "listingCount",
+          "activeListingCount",
+          "repostCount",
+          "primaryListingId",
+          "url",
+          "providerId",
+          "bookmark"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "propertyType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roomCount": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "rooms": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sizeM2": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "sizeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landSizeM2": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "landSizeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "floorText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "yearBuilt": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "price": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "previousPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "priceChangedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "pricePerM2": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "offMarketAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isUnseen": {
+            "type": "boolean"
+          },
+          "isDismissed": {
+            "type": "boolean"
+          },
+          "listingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeListingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repostCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "primaryListingId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "providerId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bookmark": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BookmarkResponse"
+              }
+            ]
+          }
+        },
+        "description": "A Home card: the Home plus key facts of its Primary Listing."
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "LinkListingRequest": {
+        "required": [
+          "listingId"
+        ],
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "description": "Manually link an ad to a Home."
+      },
+      "ListingDetailResponse": {
+        "required": [
+          "id",
+          "homeId",
+          "providerId",
+          "externalId",
+          "url",
+          "title",
+          "imageUrl",
+          "description",
+          "propertyType",
+          "rooms",
+          "sizeText",
+          "yearText",
+          "floorText",
+          "location",
+          "landSizeText",
+          "sizeM2",
+          "landSizeM2",
+          "roomCount",
+          "yearBuilt",
+          "price",
+          "previousPrice",
+          "currency",
+          "pricePerM2",
+          "firstSeenAt",
+          "lastSeenAt",
+          "delistedAt",
+          "prices",
+          "watches"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "homeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "propertyType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rooms": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sizeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "yearText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "floorText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landSizeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sizeM2": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "landSizeM2": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "roomCount": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "yearBuilt": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "price": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "previousPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "pricePerM2": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "delistedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PricePointResponse"
+            }
+          },
+          "watches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchRefResponse"
+            }
+          }
+        },
+        "description": "One ad with its price history and the Watches that sighted it."
+      },
+      "LoginRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "maxLength": 512,
+            "type": "string"
+          }
+        },
+        "description": "Sign-in payload."
+      },
+      "MarkAllSeenRequest": {
+        "type": "object",
+        "properties": {
+          "before": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "Mark Homes seen up to a point in time (defaults to now)."
+      },
+      "MarketStatus": {
+        "enum": [
+          "onMarket",
+          "offMarket",
+          "all",
+          null
+        ]
+      },
+      "MatchListingResponse": {
+        "required": [
+          "id",
+          "homeId",
+          "title",
+          "url",
+          "imageUrl",
+          "price",
+          "currency",
+          "location",
+          "propertyType",
+          "rooms",
+          "sizeText",
+          "landSizeText",
+          "floorText",
+          "yearText",
+          "description",
+          "firstSeenAt",
+          "delistedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "homeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "price": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "location": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "propertyType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rooms": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sizeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landSizeText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "floorText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "yearText": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "delistedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "The ad side of a HomeMatch."
+      },
+      "MatchSettingsResponse": {
+        "required": [
+          "autoLinkScore",
+          "possibleScore"
+        ],
+        "type": "object",
+        "properties": {
+          "autoLinkScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "possibleScore": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "description": "Matching settings shown in the UI."
+      },
+      "MatchSignalsResponse": {
+        "required": [
+          "photoDistance",
+          "photoScore",
+          "titleSimilarity",
+          "descriptionSimilarity",
+          "textScore",
+          "attributeScore",
+          "matchedAttributes",
+          "mismatchedAttributes"
+        ],
+        "type": "object",
+        "properties": {
+          "photoDistance": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "photoScore": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "titleSimilarity": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "descriptionSimilarity": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "textScore": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "attributeScore": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "matchedAttributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mismatchedAttributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Why two ads look like the same Home."
+      },
+      "NotificationChannel": {
+        "enum": [
+          "discord",
+          "telegram",
+          "email",
+          "webPush"
+        ],
+        "description": "Outbound notification channel type."
+      },
+      "NotificationRouteResponse": {
+        "required": [
+          "id",
+          "watchId",
+          "channel",
+          "destination",
+          "triggers",
+          "isEnabled",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "watchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationTrigger"
+            }
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "uint32"
+          }
+        },
+        "description": "A NotificationRoute as returned by the API."
+      },
+      "NotificationTrigger": {
+        "type": "string",
+        "description": "Flags describing when a NotificationRoute should fire."
+      },
+      "PagedResponseOfHomeSummaryResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeSummaryResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "A page of results with the total count."
+      },
+      "PagedResponseOfScanRunResponse": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScanRunResponse"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "A page of results with the total count."
+      },
+      "PricePointResponse": {
+        "required": [
+          "listingId",
+          "observedAt",
+          "amount",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "description": "A price point of one of the Home's Listings."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PushSubscriptionRequest": {
+        "required": [
+          "endpoint",
+          "p256dh",
+          "auth"
+        ],
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "maxLength": 2000,
+            "type": "string",
+            "format": "uri"
+          },
+          "p256dh": {
+            "maxLength": 512,
+            "type": "string"
+          },
+          "auth": {
+            "maxLength": 512,
+            "type": "string"
+          }
+        },
+        "description": "A browser push subscription (from PushSubscription.toJSON())."
+      },
+      "PushSubscriptionResponse": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "description": "The stored subscription id (used to unsubscribe)."
+      },
+      "RetentionSettingsResponse": {
+        "required": [
+          "delistedDays",
+          "orphanListingDays",
+          "scanRunDays",
+          "scanRunKeepPerWatch",
+          "artifactDays",
+          "sessionDays",
+          "dailyAt"
+        ],
+        "type": "object",
+        "properties": {
+          "delistedDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orphanListingDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scanRunDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scanRunKeepPerWatch": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "artifactDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dailyAt": {
+            "type": "string"
+          }
+        },
+        "description": "Retention settings shown in the UI."
+      },
+      "ReviewMatchRequest": {
+        "required": [
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/HomeMatchState"
+          }
+        },
+        "description": "Confirm or reject a Possible match."
+      },
+      "ScanArtifactKind": {
+        "enum": [
+          "screenshot",
+          "html",
+          "headers"
+        ],
+        "description": "Kind of diagnostic captured during a ScanRun."
+      },
+      "ScanArtifactResponse": {
+        "required": [
+          "id",
+          "scanRunId",
+          "kind",
+          "label",
+          "contentType",
+          "sizeBytes",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scanRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ScanArtifactKind"
+          },
+          "label": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Metadata of a diagnostic artifact."
+      },
+      "ScanRunResponse": {
+        "required": [
+          "id",
+          "watchId",
+          "watchName",
+          "status",
+          "isManual",
+          "queuedAt",
+          "startedAt",
+          "finishedAt",
+          "pagesScanned",
+          "newCount",
+          "priceChangeCount",
+          "repostCount",
+          "errorSummary",
+          "notifyErrorSummary",
+          "cloudflareBlocked",
+          "crawlReachedEnd",
+          "artifactCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "watchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "watchName": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScanRunStatus"
+          },
+          "isManual": {
+            "type": "boolean"
+          },
+          "queuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "pagesScanned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priceChangeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "repostCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorSummary": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notifyErrorSummary": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cloudflareBlocked": {
+            "type": "boolean"
+          },
+          "crawlReachedEnd": {
+            "type": "boolean"
+          },
+          "artifactCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "A ScanRun as returned by the API and pushed over SSE."
+      },
+      "ScanRunStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "baseline",
+          "succeeded",
+          "failed",
+          "interrupted"
+        ],
+        "description": "Lifecycle status of a ScanRun."
+      },
+      "SearchUrlCheckRequest": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "description": "Asks whether a pasted search URL is supported."
+      },
+      "SearchUrlCheckResponse": {
+        "required": [
+          "supported",
+          "providerId",
+          "suggestedName",
+          "problem"
+        ],
+        "type": "object",
+        "properties": {
+          "supported": {
+            "type": "boolean"
+          },
+          "providerId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "suggestedName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Result of a search URL check, with a suggested Watch name."
+      },
+      "SessionListItem": {
+        "required": [
+          "id",
+          "createdAt",
+          "lastSeenAt",
+          "expiresAt",
+          "userAgent",
+          "ipAddress",
+          "isCurrent"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userAgent": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ipAddress": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        },
+        "description": "A session in the session list."
+      },
+      "SessionResponse": {
+        "required": [
+          "name",
+          "sessionId",
+          "createdAt",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The current session."
+      },
+      "SetBookmarkRequest": {
+        "required": [
+          "stage",
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "stage": {
+            "$ref": "#/components/schemas/BookmarkStage"
+          },
+          "note": {
+            "maxLength": 4000,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Create or update a Bookmark."
+      },
+      "SettingsResponse": {
+        "required": [
+          "version",
+          "timeZone",
+          "role",
+          "maxConcurrentScans",
+          "scanCooldownMs",
+          "cloudflareChallengeWaitMs",
+          "browserHeadless",
+          "fakeProvider",
+          "telegramConfigured",
+          "smtpConfigured",
+          "vapidConfigured",
+          "vapidPublicKey",
+          "publicUrl",
+          "retention",
+          "match"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/DomolovRole"
+          },
+          "maxConcurrentScans": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scanCooldownMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cloudflareChallengeWaitMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "browserHeadless": {
+            "type": "boolean"
+          },
+          "fakeProvider": {
+            "type": "boolean"
+          },
+          "telegramConfigured": {
+            "type": "boolean"
+          },
+          "smtpConfigured": {
+            "type": "boolean"
+          },
+          "vapidConfigured": {
+            "type": "boolean"
+          },
+          "vapidPublicKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "publicUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "retention": {
+            "$ref": "#/components/schemas/RetentionSettingsResponse"
+          },
+          "match": {
+            "$ref": "#/components/schemas/MatchSettingsResponse"
+          }
+        },
+        "description": "Read-only server configuration and capability flags."
+      },
+      "SseItemOfScanRunResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ScanRunResponse"
+          },
+          "eventType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eventId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reconnectionInterval": {
+            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "StorageResponse": {
+        "required": [
+          "databaseBytes",
+          "tables",
+          "lastCleanup",
+          "nextCleanupAt",
+          "retention"
+        ],
+        "type": "object",
+        "properties": {
+          "databaseBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableStorage"
+            }
+          },
+          "lastCleanup": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CleanupRunResponse"
+              }
+            ]
+          },
+          "nextCleanupAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/RetentionSettingsResponse"
+          }
+        },
+        "description": "Storage usage and cleanup status."
+      },
+      "TableStorage": {
+        "required": [
+          "name",
+          "bytes",
+          "approximateRows"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "approximateRows": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "Size and approximate row count of one table."
+      },
+      "TestDeliveryResponse": {
+        "required": [
+          "ok",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Outcome of sending a test notification."
+      },
+      "UpdateNotificationRouteRequest": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "maxLength": 2000,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "triggers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/NotificationTrigger"
+            }
+          },
+          "isEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "Partial update of a NotificationRoute."
+      },
+      "UpdateWatchRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "searchUrl": {
+            "maxLength": 2000,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cron": {
+            "maxLength": 100,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isPaused": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "Partial update of a Watch; omitted fields stay unchanged."
+      },
+      "WatchRefResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "A Watch that sighted a Listing."
+      },
+      "WatchResponse": {
+        "required": [
+          "id",
+          "name",
+          "providerId",
+          "searchUrl",
+          "cron",
+          "isPaused",
+          "hasCompletedBaseline",
+          "createdAt",
+          "lastScannedAt",
+          "nextRunAt",
+          "cloudflareStrikeCount",
+          "cloudflareBlockedUntil",
+          "listingCount",
+          "lastScan",
+          "routes",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "searchUrl": {
+            "type": "string"
+          },
+          "cron": {
+            "type": "string"
+          },
+          "isPaused": {
+            "type": "boolean"
+          },
+          "hasCompletedBaseline": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastScannedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "nextRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cloudflareStrikeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cloudflareBlockedUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "listingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastScan": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScanRunResponse"
+              }
+            ]
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationRouteResponse"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "uint32"
+          }
+        },
+        "description": "A Watch as returned by the API."
+      }
+    },
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "description": "Session cookie set by POST /api/session.",
+        "name": "domolov_session",
+        "in": "cookie"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Session"
+    },
+    {
+      "name": "Watches"
+    },
+    {
+      "name": "Homes"
+    },
+    {
+      "name": "Dashboard"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Notification routes"
+    },
+    {
+      "name": "Matches"
+    },
+    {
+      "name": "Listings"
+    },
+    {
+      "name": "Scans"
+    },
+    {
+      "name": "Storage"
+    },
+    {
+      "name": "Push"
+    }
+  ]
+}

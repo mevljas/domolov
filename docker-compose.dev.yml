@@ -1,10 +1,19 @@
-# Headed Chromium + Xvfb. Usage:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Local development overlay: headed worker under Xvfb, api and postgres reachable from the host.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# The Vite dev server proxies /api and /health to http://localhost:5080.
 services:
-  domolov:
-    image: domolov:dev
+  postgres:
+    ports:
+      - "5432:5432"
+
+  api:
+    ports:
+      - "5080:8080"
+
+  worker:
+    # Separate tag so a dev build never overwrites the published worker image locally.
+    image: domolov-worker:dev
     build:
-      context: .
       dockerfile: Dockerfile.dev
     environment:
       DOMOLOV_BROWSER_HEADLESS: "false"
