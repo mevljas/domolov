@@ -25,18 +25,22 @@ export function useFormat() {
 
   return {
     locale: current,
-    price: (value: number | null | undefined, currency = 'EUR') => formatPrice(value, current.value, { currency }),
+    price: (value: number | null | undefined, currency = 'EUR') =>
+      formatPrice(value, current.value, { currency }),
     priceChange: (delta: number | null | undefined, currency = 'EUR') =>
       formatPriceChange(delta, current.value, currency),
     percentChange: (from: number | null | undefined, to: number | null | undefined) =>
       formatPercentChange(from, to, current.value),
-    number: (value: number | null | undefined, digits = 0) => formatNumber(value, current.value, digits),
+    number: (value: number | null | undefined, digits = 0) =>
+      formatNumber(value, current.value, digits),
     area: (m2: number | null | undefined) => formatArea(m2, current.value),
     pricePerArea: (price: number | null | undefined, m2: number | null | undefined) =>
       formatPricePerArea(price, m2, current.value),
-    date: (value: DateInput, style: DateStyle = 'medium') => formatDate(value, current.value, style),
+    date: (value: DateInput, style: DateStyle = 'medium') =>
+      formatDate(value, current.value, style),
     time: (value: DateInput) => formatTime(value, current.value),
-    dateTime: (value: DateInput, style: DateStyle = 'medium') => formatDateTime(value, current.value, style),
+    dateTime: (value: DateInput, style: DateStyle = 'medium') =>
+      formatDateTime(value, current.value, style),
     relative: (value: DateInput, now?: DateInput) => formatRelativeTime(value, current.value, now),
     duration: (ms: number | null | undefined) => formatDuration(ms, current.value),
     bytes: (bytes: number | null | undefined) => formatBytes(bytes, current.value),

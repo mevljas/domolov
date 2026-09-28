@@ -11,9 +11,7 @@
   "paths": {
     "/api/session": {
       "get": {
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "summary": "Get the current session (401 when signed out)",
         "operationId": "GetSession",
         "responses": {
@@ -28,14 +26,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "post": {
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "summary": "Sign in with the operator password; sets the session cookie",
         "operationId": "SignIn",
         "requestBody": {
@@ -65,9 +59,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "summary": "Sign out of this browser",
         "operationId": "SignOut",
         "responses": {
@@ -75,16 +67,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/sessions": {
       "get": {
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "summary": "List active sessions",
         "operationId": "ListSessions",
         "responses": {
@@ -102,14 +90,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "delete": {
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "summary": "Revoke every session, including this one",
         "operationId": "SignOutEverywhere",
         "responses": {
@@ -117,16 +101,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/sessions/{id}": {
       "delete": {
-        "tags": [
-          "Session"
-        ],
+        "tags": ["Session"],
         "summary": "Revoke one session",
         "operationId": "RevokeSession",
         "parameters": [
@@ -145,16 +125,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/watches": {
       "get": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "List Watches with their routes, last scan and next run",
         "operationId": "ListWatches",
         "responses": {
@@ -172,14 +148,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "post": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "Create a Watch (optionally with its first notification route); the first scan is queued",
         "operationId": "CreateWatch",
         "requestBody": {
@@ -214,16 +186,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/watches/{id}": {
       "get": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "Get a Watch (ETag for conditional updates)",
         "operationId": "GetWatch",
         "parameters": [
@@ -259,14 +227,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "patch": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "Rename, reschedule, change the search URL, or pause/resume a Watch",
         "operationId": "UpdateWatch",
         "parameters": [
@@ -332,14 +296,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "delete": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "Delete a Watch with its routes, scans and sightings",
         "operationId": "DeleteWatch",
         "parameters": [
@@ -368,16 +328,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/watches/{id}/scans": {
       "post": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "Queue a scan now (Run now); returns the active ScanRun",
         "operationId": "RunWatchNow",
         "parameters": [
@@ -413,16 +369,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/search-url-checks": {
       "post": {
-        "tags": [
-          "Watches"
-        ],
+        "tags": ["Watches"],
         "summary": "Check whether a pasted search URL is supported and suggest a Watch name",
         "operationId": "CheckSearchUrl",
         "requestBody": {
@@ -447,16 +399,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/bookmarks": {
       "get": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Bookmarked Homes grouped by stage",
         "operationId": "GetBookmarkBoard",
         "responses": {
@@ -471,16 +419,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/dashboard": {
       "get": {
-        "tags": [
-          "Dashboard"
-        ],
+        "tags": ["Dashboard"],
         "summary": "Headline numbers, Unseen Homes, price drops, Watch health and active scans",
         "operationId": "GetDashboard",
         "responses": {
@@ -495,16 +439,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/settings": {
       "get": {
-        "tags": [
-          "Settings"
-        ],
+        "tags": ["Settings"],
         "summary": "Read-only server configuration and capability flags",
         "operationId": "GetSettings",
         "responses": {
@@ -519,16 +459,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/watches/{watchId}/notification-routes": {
       "get": {
-        "tags": [
-          "Notification routes"
-        ],
+        "tags": ["Notification routes"],
         "summary": "List a Watch's notification routes",
         "operationId": "ListNotificationRoutes",
         "parameters": [
@@ -557,14 +493,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "post": {
-        "tags": [
-          "Notification routes"
-        ],
+        "tags": ["Notification routes"],
         "summary": "Add a notification route",
         "operationId": "CreateNotificationRoute",
         "parameters": [
@@ -610,16 +542,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/watches/{watchId}/notification-routes/{routeId}": {
       "patch": {
-        "tags": [
-          "Notification routes"
-        ],
+        "tags": ["Notification routes"],
         "summary": "Change a route's destination, triggers or enabled flag",
         "operationId": "UpdateNotificationRoute",
         "parameters": [
@@ -684,14 +612,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "delete": {
-        "tags": [
-          "Notification routes"
-        ],
+        "tags": ["Notification routes"],
         "summary": "Delete a route",
         "operationId": "DeleteNotificationRoute",
         "parameters": [
@@ -719,16 +643,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/watches/{watchId}/notification-routes/{routeId}/test-deliveries": {
       "post": {
-        "tags": [
-          "Notification routes"
-        ],
+        "tags": ["Notification routes"],
         "summary": "Send a sample notification through the route right now",
         "operationId": "SendTestNotification",
         "parameters": [
@@ -763,16 +683,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes": {
       "get": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "The Homes feed: one card per Home with filters, sorting and paging",
         "operationId": "SearchHomes",
         "parameters": [
@@ -931,16 +847,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/{id}": {
       "get": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "A Home with every ad in its history, price history and possible matches",
         "operationId": "GetHome",
         "parameters": [
@@ -976,16 +888,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/{id}/bookmark": {
       "put": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Bookmark a Home or change its stage and note",
         "operationId": "SetBookmark",
         "parameters": [
@@ -1031,14 +939,10 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "delete": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Remove a Home's Bookmark",
         "operationId": "RemoveBookmark",
         "parameters": [
@@ -1057,16 +961,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/{id}/dismissal": {
       "put": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Dismiss a Home: hidden from feeds and never notified (removes its Bookmark)",
         "operationId": "DismissHome",
         "parameters": [
@@ -1085,14 +985,10 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       },
       "delete": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Undo a dismissal",
         "operationId": "RestoreHome",
         "parameters": [
@@ -1111,16 +1007,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/{id}/seen": {
       "put": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Mark a Home as seen",
         "operationId": "MarkHomeSeen",
         "parameters": [
@@ -1139,16 +1031,12 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/seen": {
       "post": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Mark every Unseen Home as seen",
         "operationId": "MarkAllHomesSeen",
         "requestBody": {
@@ -1173,16 +1061,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/{id}/listings": {
       "post": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Link another ad to this Home (same home)",
         "operationId": "LinkListing",
         "parameters": [
@@ -1218,16 +1102,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/homes/{id}/listings/{listingId}": {
       "delete": {
-        "tags": [
-          "Homes"
-        ],
+        "tags": ["Homes"],
         "summary": "Split an ad off this Home (not the same home); returns the new Home",
         "operationId": "UnlinkListing",
         "parameters": [
@@ -1272,16 +1152,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/home-matches": {
       "get": {
-        "tags": [
-          "Matches"
-        ],
+        "tags": ["Matches"],
         "summary": "Matches to review (possible by default)",
         "operationId": "ListHomeMatches",
         "parameters": [
@@ -1308,16 +1184,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/home-matches/{id}": {
       "patch": {
-        "tags": [
-          "Matches"
-        ],
+        "tags": ["Matches"],
         "summary": "Confirm (same home) or reject (different homes) a possible match",
         "operationId": "ReviewHomeMatch",
         "parameters": [
@@ -1366,16 +1238,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/listings/{id}": {
       "get": {
-        "tags": [
-          "Listings"
-        ],
+        "tags": ["Listings"],
         "summary": "One ad with its price history",
         "operationId": "GetListing",
         "parameters": [
@@ -1411,16 +1279,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/listings": {
       "delete": {
-        "tags": [
-          "Listings"
-        ],
+        "tags": ["Listings"],
         "summary": "Delete every Listing and Home (danger zone)",
         "operationId": "DeleteAllListings",
         "responses": {
@@ -1435,16 +1299,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/scans": {
       "get": {
-        "tags": [
-          "Scans"
-        ],
+        "tags": ["Scans"],
         "summary": "ScanRuns, newest first",
         "operationId": "ListScanRuns",
         "parameters": [
@@ -1499,16 +1359,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/scans/events": {
       "get": {
-        "tags": [
-          "Scans"
-        ],
+        "tags": ["Scans"],
         "summary": "Server-Sent Events: 'scanRun' on every ScanRun change, 'ping' every 25 s",
         "operationId": "ScanRunEvents",
         "responses": {
@@ -1523,16 +1379,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/scans/{id}": {
       "get": {
-        "tags": [
-          "Scans"
-        ],
+        "tags": ["Scans"],
         "summary": "One ScanRun",
         "operationId": "GetScanRun",
         "parameters": [
@@ -1568,16 +1420,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/scans/{id}/artifacts": {
       "get": {
-        "tags": [
-          "Scans"
-        ],
+        "tags": ["Scans"],
         "summary": "Diagnostics captured during a ScanRun (Cloudflare screenshots, HTML, headers)",
         "operationId": "ListScanArtifacts",
         "parameters": [
@@ -1606,16 +1454,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/scans/{id}/artifacts/{artifactId}": {
       "get": {
-        "tags": [
-          "Scans"
-        ],
+        "tags": ["Scans"],
         "summary": "Download an artifact",
         "operationId": "GetScanArtifact",
         "parameters": [
@@ -1643,16 +1487,12 @@
             "description": "OK"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/storage": {
       "get": {
-        "tags": [
-          "Storage"
-        ],
+        "tags": ["Storage"],
         "summary": "Database size, largest tables and cleanup status",
         "operationId": "GetStorage",
         "responses": {
@@ -1667,16 +1507,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/storage/cleanups": {
       "post": {
-        "tags": [
-          "Storage"
-        ],
+        "tags": ["Storage"],
         "summary": "Ask the worker to run the retention cleanup now",
         "operationId": "RunCleanupNow",
         "responses": {
@@ -1684,16 +1520,12 @@
             "description": "Accepted"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/push-subscriptions": {
       "post": {
-        "tags": [
-          "Push"
-        ],
+        "tags": ["Push"],
         "summary": "Store this browser's Web Push subscription",
         "operationId": "SubscribePush",
         "requestBody": {
@@ -1728,16 +1560,12 @@
             }
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     },
     "/api/push-subscriptions/{id}": {
       "delete": {
-        "tags": [
-          "Push"
-        ],
+        "tags": ["Push"],
         "summary": "Remove a Web Push subscription",
         "operationId": "UnsubscribePush",
         "parameters": [
@@ -1756,18 +1584,14 @@
             "description": "No Content"
           }
         },
-        "security": [
-          { }
-        ]
+        "security": [{}]
       }
     }
   },
   "components": {
     "schemas": {
       "BookmarkBoardResponse": {
-        "required": [
-          "columns"
-        ],
+        "required": ["columns"],
         "type": "object",
         "properties": {
           "columns": {
@@ -1780,10 +1604,7 @@
         "description": "The Bookmark board: Homes grouped by stage."
       },
       "BookmarkColumnResponse": {
-        "required": [
-          "stage",
-          "homes"
-        ],
+        "required": ["stage", "homes"],
         "type": "object",
         "properties": {
           "stage": {
@@ -1799,22 +1620,14 @@
         "description": "One board column."
       },
       "BookmarkResponse": {
-        "required": [
-          "stage",
-          "note",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["stage", "note", "createdAt", "updatedAt"],
         "type": "object",
         "properties": {
           "stage": {
             "$ref": "#/components/schemas/BookmarkStage"
           },
           "note": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "createdAt": {
             "type": "string",
@@ -1828,14 +1641,7 @@
         "description": "A Bookmark as returned by the API."
       },
       "BookmarkStage": {
-        "enum": [
-          "interested",
-          "contacted",
-          "viewingScheduled",
-          "viewed",
-          "offerMade",
-          "rejected"
-        ],
+        "enum": ["interested", "contacted", "viewingScheduled", "viewed", "offerMade", "rejected"],
         "description": "Where the operator is with a Bookmarked Home. Ordered from least to most advanced."
       },
       "CleanupRunResponse": {
@@ -1866,10 +1672,7 @@
             "format": "date-time"
           },
           "finishedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "deletedListings": {
@@ -1893,25 +1696,17 @@
             "format": "int32"
           },
           "browserProfileBytes": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": ["null", "integer"],
             "format": "int64"
           },
           "error": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           }
         },
         "description": "A finished or running cleanup."
       },
       "CountResponse": {
-        "required": [
-          "count"
-        ],
+        "required": ["count"],
         "type": "object",
         "properties": {
           "count": {
@@ -1922,10 +1717,7 @@
         "description": "Number of Homes affected by a bulk operation."
       },
       "CreateNotificationRouteRequest": {
-        "required": [
-          "channel",
-          "destination"
-        ],
+        "required": ["channel", "destination"],
         "type": "object",
         "properties": {
           "channel": {
@@ -1936,10 +1728,7 @@
             "type": "string"
           },
           "triggers": {
-            "type": [
-              "null",
-              "array"
-            ],
+            "type": ["null", "array"],
             "items": {
               "$ref": "#/components/schemas/NotificationTrigger"
             }
@@ -1952,10 +1741,7 @@
         "description": "Payload for adding a NotificationRoute."
       },
       "CreateWatchRequest": {
-        "required": [
-          "name",
-          "searchUrl"
-        ],
+        "required": ["name", "searchUrl"],
         "type": "object",
         "properties": {
           "name": {
@@ -1968,10 +1754,7 @@
           },
           "cron": {
             "maxLength": 100,
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "isPaused": {
             "type": "boolean",
@@ -1991,13 +1774,7 @@
         "description": "Payload for creating a Watch, optionally with its first notification route."
       },
       "DashboardResponse": {
-        "required": [
-          "stats",
-          "unseen",
-          "priceDrops",
-          "watches",
-          "activeScans"
-        ],
+        "required": ["stats", "unseen", "priceDrops", "watches", "activeScans"],
         "type": "object",
         "properties": {
           "stats": {
@@ -2084,9 +1861,7 @@
         "description": "Headline numbers for the dashboard."
       },
       "DeleteAllListingsResponse": {
-        "required": [
-          "deleted"
-        ],
+        "required": ["deleted"],
         "type": "object",
         "properties": {
           "deleted": {
@@ -2097,19 +1872,10 @@
         "description": "Number of Listings removed."
       },
       "DismissedFilter": {
-        "enum": [
-          "exclude",
-          "include",
-          "only",
-          null
-        ]
+        "enum": ["exclude", "include", "only", null]
       },
       "DomolovRole": {
-        "enum": [
-          "all",
-          "api",
-          "worker"
-        ],
+        "enum": ["all", "api", "worker"],
         "description": "Which parts of Domolov this process runs."
       },
       "HomeDetailResponse": {
@@ -2128,16 +1894,10 @@
             "$ref": "#/components/schemas/HomeSummaryResponse"
           },
           "description": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "yearText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "listings": {
             "type": "array",
@@ -2199,16 +1959,10 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "price": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "currency": {
@@ -2223,10 +1977,7 @@
             "format": "date-time"
           },
           "delistedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "role": {
@@ -2242,11 +1993,7 @@
         "description": "One ad in the Home's history."
       },
       "HomeListingRole": {
-        "enum": [
-          "original",
-          "repost",
-          "duplicate"
-        ],
+        "enum": ["original", "repost", "duplicate"],
         "description": "Role of a Listing within its Home's history."
       },
       "HomeMatchResponse": {
@@ -2282,10 +2029,7 @@
             "format": "date-time"
           },
           "reviewedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "listing": {
@@ -2308,12 +2052,7 @@
         "description": "A HomeMatch with both sides for side-by-side review."
       },
       "HomeMatchState": {
-        "enum": [
-          "autoLinked",
-          "possible",
-          "confirmed",
-          "rejected"
-        ],
+        "enum": ["autoLinked", "possible", "confirmed", "rejected"],
         "description": "Lifecycle of a HomeMatch."
       },
       "HomeSort": {
@@ -2371,104 +2110,59 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "location": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "propertyType": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "roomCount": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "rooms": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "sizeM2": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "sizeText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "landSizeM2": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "landSizeText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "floorText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "yearBuilt": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": ["null", "integer"],
             "format": "int32"
           },
           "price": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "previousPrice": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "currency": {
             "type": "string"
           },
           "priceChangedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "pricePerM2": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "firstSeenAt": {
@@ -2480,10 +2174,7 @@
             "format": "date-time"
           },
           "offMarketAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "isUnseen": {
@@ -2505,23 +2196,14 @@
             "format": "int32"
           },
           "primaryListingId": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "uuid"
           },
           "url": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "providerId": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "bookmark": {
             "oneOf": [
@@ -2540,35 +2222,20 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "title": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "status": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": ["null", "integer"],
             "format": "int32"
           },
           "detail": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "instance": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "errors": {
             "type": "object",
@@ -2582,9 +2249,7 @@
         }
       },
       "LinkListingRequest": {
-        "required": [
-          "listingId"
-        ],
+        "required": ["listingId"],
         "type": "object",
         "properties": {
           "listingId": {
@@ -2648,109 +2313,61 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "description": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "propertyType": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "rooms": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "sizeText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "yearText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "floorText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "location": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "landSizeText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "sizeM2": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "landSizeM2": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "roomCount": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "yearBuilt": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": ["null", "integer"],
             "format": "int32"
           },
           "price": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "previousPrice": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "currency": {
             "type": "string"
           },
           "pricePerM2": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "firstSeenAt": {
@@ -2762,10 +2379,7 @@
             "format": "date-time"
           },
           "delistedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "prices": {
@@ -2784,9 +2398,7 @@
         "description": "One ad with its price history and the Watches that sighted it."
       },
       "LoginRequest": {
-        "required": [
-          "password"
-        ],
+        "required": ["password"],
         "type": "object",
         "properties": {
           "password": {
@@ -2800,22 +2412,14 @@
         "type": "object",
         "properties": {
           "before": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           }
         },
         "description": "Mark Homes seen up to a point in time (defaults to now)."
       },
       "MarketStatus": {
-        "enum": [
-          "onMarket",
-          "offMarket",
-          "all",
-          null
-        ]
+        "enum": ["onMarket", "offMarket", "all", null]
       },
       "MatchListingResponse": {
         "required": [
@@ -2854,88 +2458,52 @@
             "type": "string"
           },
           "imageUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "price": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "currency": {
             "type": "string"
           },
           "location": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "propertyType": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "rooms": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "sizeText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "landSizeText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "floorText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "yearText": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "description": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "firstSeenAt": {
             "type": "string",
             "format": "date-time"
           },
           "delistedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           }
         },
         "description": "The ad side of a HomeMatch."
       },
       "MatchSettingsResponse": {
-        "required": [
-          "autoLinkScore",
-          "possibleScore"
-        ],
+        "required": ["autoLinkScore", "possibleScore"],
         "type": "object",
         "properties": {
           "autoLinkScore": {
@@ -2963,45 +2531,27 @@
         "type": "object",
         "properties": {
           "photoDistance": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": ["null", "integer"],
             "format": "int32"
           },
           "photoScore": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "titleSimilarity": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "descriptionSimilarity": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "textScore": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "attributeScore": {
-            "type": [
-              "null",
-              "number"
-            ],
+            "type": ["null", "number"],
             "format": "double"
           },
           "matchedAttributes": {
@@ -3020,24 +2570,11 @@
         "description": "Why two ads look like the same Home."
       },
       "NotificationChannel": {
-        "enum": [
-          "discord",
-          "telegram",
-          "email",
-          "webPush"
-        ],
+        "enum": ["discord", "telegram", "email", "webPush"],
         "description": "Outbound notification channel type."
       },
       "NotificationRouteResponse": {
-        "required": [
-          "id",
-          "watchId",
-          "channel",
-          "destination",
-          "triggers",
-          "isEnabled",
-          "version"
-        ],
+        "required": ["id", "watchId", "channel", "destination", "triggers", "isEnabled", "version"],
         "type": "object",
         "properties": {
           "id": {
@@ -3075,12 +2612,7 @@
         "description": "Flags describing when a NotificationRoute should fire."
       },
       "PagedResponseOfHomeSummaryResponse": {
-        "required": [
-          "items",
-          "total",
-          "page",
-          "pageSize"
-        ],
+        "required": ["items", "total", "page", "pageSize"],
         "type": "object",
         "properties": {
           "items": {
@@ -3105,12 +2637,7 @@
         "description": "A page of results with the total count."
       },
       "PagedResponseOfScanRunResponse": {
-        "required": [
-          "items",
-          "total",
-          "page",
-          "pageSize"
-        ],
+        "required": ["items", "total", "page", "pageSize"],
         "type": "object",
         "properties": {
           "items": {
@@ -3135,12 +2662,7 @@
         "description": "A page of results with the total count."
       },
       "PricePointResponse": {
-        "required": [
-          "listingId",
-          "observedAt",
-          "amount",
-          "currency"
-        ],
+        "required": ["listingId", "observedAt", "amount", "currency"],
         "type": "object",
         "properties": {
           "listingId": {
@@ -3165,44 +2687,25 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "title": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "status": {
-            "type": [
-              "null",
-              "integer"
-            ],
+            "type": ["null", "integer"],
             "format": "int32"
           },
           "detail": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "instance": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           }
         }
       },
       "PushSubscriptionRequest": {
-        "required": [
-          "endpoint",
-          "p256dh",
-          "auth"
-        ],
+        "required": ["endpoint", "p256dh", "auth"],
         "type": "object",
         "properties": {
           "endpoint": {
@@ -3222,9 +2725,7 @@
         "description": "A browser push subscription (from PushSubscription.toJSON())."
       },
       "PushSubscriptionResponse": {
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "type": "object",
         "properties": {
           "id": {
@@ -3277,9 +2778,7 @@
         "description": "Retention settings shown in the UI."
       },
       "ReviewMatchRequest": {
-        "required": [
-          "state"
-        ],
+        "required": ["state"],
         "type": "object",
         "properties": {
           "state": {
@@ -3289,23 +2788,11 @@
         "description": "Confirm or reject a Possible match."
       },
       "ScanArtifactKind": {
-        "enum": [
-          "screenshot",
-          "html",
-          "headers"
-        ],
+        "enum": ["screenshot", "html", "headers"],
         "description": "Kind of diagnostic captured during a ScanRun."
       },
       "ScanArtifactResponse": {
-        "required": [
-          "id",
-          "scanRunId",
-          "kind",
-          "label",
-          "contentType",
-          "sizeBytes",
-          "createdAt"
-        ],
+        "required": ["id", "scanRunId", "kind", "label", "contentType", "sizeBytes", "createdAt"],
         "type": "object",
         "properties": {
           "id": {
@@ -3380,17 +2867,11 @@
             "format": "date-time"
           },
           "startedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "finishedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "pagesScanned": {
@@ -3410,16 +2891,10 @@
             "format": "int32"
           },
           "errorSummary": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "notifyErrorSummary": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "cloudflareBlocked": {
             "type": "boolean"
@@ -3435,20 +2910,11 @@
         "description": "A ScanRun as returned by the API and pushed over SSE."
       },
       "ScanRunStatus": {
-        "enum": [
-          "queued",
-          "running",
-          "baseline",
-          "succeeded",
-          "failed",
-          "interrupted"
-        ],
+        "enum": ["queued", "running", "baseline", "succeeded", "failed", "interrupted"],
         "description": "Lifecycle status of a ScanRun."
       },
       "SearchUrlCheckRequest": {
-        "required": [
-          "url"
-        ],
+        "required": ["url"],
         "type": "object",
         "properties": {
           "url": {
@@ -3459,34 +2925,20 @@
         "description": "Asks whether a pasted search URL is supported."
       },
       "SearchUrlCheckResponse": {
-        "required": [
-          "supported",
-          "providerId",
-          "suggestedName",
-          "problem"
-        ],
+        "required": ["supported", "providerId", "suggestedName", "problem"],
         "type": "object",
         "properties": {
           "supported": {
             "type": "boolean"
           },
           "providerId": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "suggestedName": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "problem": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           }
         },
         "description": "Result of a search URL check, with a suggested Watch name."
@@ -3520,16 +2972,10 @@
             "format": "date-time"
           },
           "userAgent": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "ipAddress": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "isCurrent": {
             "type": "boolean"
@@ -3538,12 +2984,7 @@
         "description": "A session in the session list."
       },
       "SessionResponse": {
-        "required": [
-          "name",
-          "sessionId",
-          "createdAt",
-          "expiresAt"
-        ],
+        "required": ["name", "sessionId", "createdAt", "expiresAt"],
         "type": "object",
         "properties": {
           "name": {
@@ -3565,10 +3006,7 @@
         "description": "The current session."
       },
       "SetBookmarkRequest": {
-        "required": [
-          "stage",
-          "note"
-        ],
+        "required": ["stage", "note"],
         "type": "object",
         "properties": {
           "stage": {
@@ -3576,10 +3014,7 @@
           },
           "note": {
             "maxLength": 4000,
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           }
         },
         "description": "Create or update a Bookmark."
@@ -3641,16 +3076,10 @@
             "type": "boolean"
           },
           "vapidPublicKey": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "publicUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "retention": {
             "$ref": "#/components/schemas/RetentionSettingsResponse"
@@ -3668,34 +3097,19 @@
             "$ref": "#/components/schemas/ScanRunResponse"
           },
           "eventType": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "eventId": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "reconnectionInterval": {
             "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           }
         }
       },
       "StorageResponse": {
-        "required": [
-          "databaseBytes",
-          "tables",
-          "lastCleanup",
-          "nextCleanupAt",
-          "retention"
-        ],
+        "required": ["databaseBytes", "tables", "lastCleanup", "nextCleanupAt", "retention"],
         "type": "object",
         "properties": {
           "databaseBytes": {
@@ -3719,10 +3133,7 @@
             ]
           },
           "nextCleanupAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "retention": {
@@ -3732,11 +3143,7 @@
         "description": "Storage usage and cleanup status."
       },
       "TableStorage": {
-        "required": [
-          "name",
-          "bytes",
-          "approximateRows"
-        ],
+        "required": ["name", "bytes", "approximateRows"],
         "type": "object",
         "properties": {
           "name": {
@@ -3754,20 +3161,14 @@
         "description": "Size and approximate row count of one table."
       },
       "TestDeliveryResponse": {
-        "required": [
-          "ok",
-          "error"
-        ],
+        "required": ["ok", "error"],
         "type": "object",
         "properties": {
           "ok": {
             "type": "boolean"
           },
           "error": {
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           }
         },
         "description": "Outcome of sending a test notification."
@@ -3777,25 +3178,16 @@
         "properties": {
           "destination": {
             "maxLength": 2000,
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "triggers": {
-            "type": [
-              "null",
-              "array"
-            ],
+            "type": ["null", "array"],
             "items": {
               "$ref": "#/components/schemas/NotificationTrigger"
             }
           },
           "isEnabled": {
-            "type": [
-              "null",
-              "boolean"
-            ]
+            "type": ["null", "boolean"]
           }
         },
         "description": "Partial update of a NotificationRoute."
@@ -3805,39 +3197,24 @@
         "properties": {
           "name": {
             "maxLength": 200,
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "searchUrl": {
             "maxLength": 2000,
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "cron": {
             "maxLength": 100,
-            "type": [
-              "null",
-              "string"
-            ]
+            "type": ["null", "string"]
           },
           "isPaused": {
-            "type": [
-              "null",
-              "boolean"
-            ]
+            "type": ["null", "boolean"]
           }
         },
         "description": "Partial update of a Watch; omitted fields stay unchanged."
       },
       "WatchRefResponse": {
-        "required": [
-          "id",
-          "name"
-        ],
+        "required": ["id", "name"],
         "type": "object",
         "properties": {
           "id": {
@@ -3898,17 +3275,11 @@
             "format": "date-time"
           },
           "lastScannedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "nextRunAt": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "cloudflareStrikeCount": {
@@ -3916,10 +3287,7 @@
             "format": "int32"
           },
           "cloudflareBlockedUntil": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "format": "date-time"
           },
           "listingCount": {

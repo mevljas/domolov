@@ -25,7 +25,9 @@ export function wordDiff(left: string, right: string): { left: DiffToken[]; righ
   for (let i = n - 1; i >= 0; i--) {
     for (let j = m - 1; j >= 0; j--) {
       lcs[i]![j] =
-        normalize(a[i]!) === normalize(b[j]!) ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!)
+        normalize(a[i]!) === normalize(b[j]!)
+          ? lcs[i + 1]![j + 1]! + 1
+          : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!)
     }
   }
 
@@ -64,8 +66,16 @@ function merge(tokens: DiffToken[]): DiffToken[] {
 
 /** Share of words in common, 0..1 — a quick similarity hint for the UI. */
 export function wordOverlap(left: string, right: string): number {
-  const a = new Set(tokenize(left).filter((t) => !/^\s+$/.test(t)).map(normalize))
-  const b = new Set(tokenize(right).filter((t) => !/^\s+$/.test(t)).map(normalize))
+  const a = new Set(
+    tokenize(left)
+      .filter((t) => !/^\s+$/.test(t))
+      .map(normalize),
+  )
+  const b = new Set(
+    tokenize(right)
+      .filter((t) => !/^\s+$/.test(t))
+      .map(normalize),
+  )
   if (a.size === 0 && b.size === 0) return 1
   let common = 0
   for (const word of a) if (b.has(word)) common++

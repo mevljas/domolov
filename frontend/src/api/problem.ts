@@ -119,7 +119,9 @@ export function fieldErrors(error: unknown): Record<string, string> {
   const result: Record<string, string> = {}
   if (!errors || typeof errors !== 'object') return result
   for (const [key, messages] of Object.entries(errors)) {
-    const first = Array.isArray(messages) ? messages.find((m) => typeof m === 'string' && m) : undefined
+    const first = Array.isArray(messages)
+      ? messages.find((m) => typeof m === 'string' && m)
+      : undefined
     if (!first) continue
     const camel = key
       .split('.')

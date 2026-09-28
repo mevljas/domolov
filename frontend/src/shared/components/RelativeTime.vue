@@ -7,7 +7,9 @@ const props = defineProps<{ value: string | null | undefined; fallback?: string 
 const format = useFormat()
 const now = useTicker()
 
-const label = computed(() => (props.value ? format.relative(props.value, now.value) : (props.fallback ?? '—')))
+const label = computed(() =>
+  props.value ? format.relative(props.value, now.value) : (props.fallback ?? '—'),
+)
 const full = computed(() => (props.value ? format.dateTime(props.value, 'long') : undefined))
 </script>
 

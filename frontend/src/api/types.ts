@@ -57,7 +57,12 @@ export const NOTIFICATION_TRIGGERS = [
 ] as const
 export type NotificationTrigger = (typeof NOTIFICATION_TRIGGERS)[number]
 
-export const NOTIFICATION_CHANNELS: readonly NotificationChannel[] = ['discord', 'telegram', 'email', 'webPush']
+export const NOTIFICATION_CHANNELS: readonly NotificationChannel[] = [
+  'discord',
+  'telegram',
+  'email',
+  'webPush',
+]
 
 export const BOOKMARK_STAGES: readonly BookmarkStage[] = [
   'interested',
