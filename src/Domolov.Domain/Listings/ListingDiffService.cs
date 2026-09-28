@@ -1,21 +1,20 @@
-using Domolov.Domain.Enums;
-using Domolov.Domain.Providers;
+using Domolov.Domain.Notifications;
 
-namespace Domolov.Domain.Services;
+namespace Domolov.Domain.Listings;
 
-/// <summary>Kind of change detected for a listing during a Scan.</summary>
+/// <summary>Kind of change detected for a Listing or Home during a ScanRun.</summary>
 public enum ListingChangeKind
 {
     Unchanged = 0,
     New = 1,
     PriceDecreased = 2,
     PriceIncreased = 3,
+
+    /// <summary>A new Listing of a Home whose earlier Listing was Delisted.</summary>
+    Reposted = 4,
 }
 
-/// <summary>Result of comparing a crawled card to stored state.</summary>
-public sealed record ListingDiff(ListingCard Card, ListingChangeKind Kind, decimal? PreviousPrice);
-
-/// <summary>Pure listing comparison and notification trigger matching.</summary>
+/// <summary>Pure price comparison and notification trigger matching.</summary>
 public static class ListingDiffService
 {
     public static ListingChangeKind Classify(decimal? previousPrice, decimal? currentPrice)
@@ -49,6 +48,7 @@ public static class ListingDiffService
                 || triggers.HasFlag(NotificationTrigger.AnyPriceChange),
             ListingChangeKind.PriceIncreased => triggers.HasFlag(NotificationTrigger.PriceIncreased)
                 || triggers.HasFlag(NotificationTrigger.AnyPriceChange),
+            ListingChangeKind.Reposted => triggers.HasFlag(NotificationTrigger.Reposted),
             _ => false,
         };
     }

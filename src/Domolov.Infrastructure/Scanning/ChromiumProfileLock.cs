@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Domolov.Infrastructure.Providers;
+namespace Domolov.Infrastructure.Scanning;
 
 /// <summary>
 /// Clears Chromium Singleton* files left on a persistent profile volume after container recreate.

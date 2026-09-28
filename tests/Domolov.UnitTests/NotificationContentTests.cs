@@ -1,5 +1,5 @@
 using Domolov.Application.Abstractions;
-using Domolov.Domain.Enums;
+using Domolov.Domain.Notifications;
 using Domolov.Infrastructure.Notifications;
 using FluentAssertions;
 

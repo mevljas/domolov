@@ -1,45 +1,107 @@
+using Domolov.Application;
 using Domolov.Application.Abstractions;
-using Domolov.Application.Services;
+using Domolov.Application.Options;
 using Domolov.Domain.Providers;
-using Domolov.Domain.Services;
 using Domolov.Infrastructure.Notifications;
 using Domolov.Infrastructure.Persistence;
-using Domolov.Infrastructure.Providers;
+using Domolov.Infrastructure.Scanning;
+using Domolov.Infrastructure.Signals;
 using Domolov.Infrastructure.Workers;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Domolov.Infrastructure;
 
 /// <summary>DI registration for infrastructure services.</summary>
 public static class DependencyInjection
 {
+    public const string DefaultConnectionString =
+        "Host=localhost;Port=5432;Database=domolov;Username=domolov;Password=domolov";
+
+    /// <summary>Reads the role before the container is built (decides which services exist).</summary>
+    public static DomolovRole ReadRole(IConfiguration configuration) =>
+        configuration
+            .GetSection(DomolovOptions.SectionName)
+            .GetValue<DomolovRole?>(nameof(DomolovOptions.Role)) ?? DomolovRole.All;
+
     public static IServiceCollection AddDomolovInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration
     )
     {
-        services.Configure<DomolovOptions>(configuration.GetSection(DomolovOptions.SectionName));
-        BindEnvOverrides(services, configuration);
+        services
+            .AddOptions<DomolovOptions>()
+            .Bind(configuration.GetSection(DomolovOptions.SectionName))
+            .ValidateDataAnnotations()
+            .Validate(
+                o => IsValidTimeZone(o.TimeZone),
+                "DOMOLOV_TIMEZONE must be an IANA timezone id."
+            )
+            .Validate(
+                o =>
+                    !o.RunsApi
+                    || !string.IsNullOrEmpty(o.AdminPassword)
+                    || !string.IsNullOrEmpty(o.AdminPasswordHash),
+                "Set DOMOLOV_ADMIN_PASSWORD or DOMOLOV_ADMIN_PASSWORD_HASH."
+            )
+            .ValidateOnStart();
+        services
+            .AddOptions<RetentionOptions>()
+            .Bind(configuration.GetSection(RetentionOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services
+            .AddOptions<MatchOptions>()
+            .Bind(configuration.GetSection(MatchOptions.SectionName))
+            .ValidateDataAnnotations()
+            .Validate(
+                m => m.PossibleScore <= m.AutoLinkScore,
+                "DOMOLOV_MATCH_POSSIBLE_SCORE must not exceed the auto-link score."
+            )
+            .ValidateOnStart();
 
-        services.AddDbContext<DomolovDbContext>(options =>
-        {
-            var cs =
-                configuration.GetConnectionString("Default")
-                ?? "Host=localhost;Port=5432;Database=domolov;Username=domolov;Password=domolov";
-            options.UseNpgsql(cs);
-        });
+        var connectionString = WithoutGssProbe(
+            configuration.GetConnectionString("Default") ?? DefaultConnectionString
+        );
+        services.TryAddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+        services.AddDbContext<DomolovDbContext>(
+            (sp, options) => options.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>())
+        );
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<DomolovDbContext>());
+        services.AddScoped<DatabaseMigrator>();
+        services
+            .AddDataProtection()
+            .SetApplicationName("Domolov")
+            .PersistKeysToDbContext<DomolovDbContext>();
 
-        services.AddScoped<IWatchService, WatchService>();
-        services.AddScoped<IListingQueryService, ListingQueryService>();
-        services.AddScoped<IScanRunQueryService, ScanRunQueryService>();
-        services.AddSingleton<ISettingsService, SettingsService>();
-        services.AddSingleton<IScanOrchestrator, ScanOrchestrator>();
+        services.AddDomolovApplication();
+        services.TryAddSingleton<ISignalPublisher, PostgresSignalPublisher>();
+        services.TryAddSingleton<SignalBus>();
+        services.TryAddSingleton<IScanRunEventHub, ScanRunEventHub>();
+        services.TryAddSingleton<IStorageStats, PostgresStorageStats>();
+        services.AddHostedService<PostgresSignalListener>();
 
+        services.AddSingleton(sp => new HumanPacer(
+            Random.Shared,
+            sp.GetRequiredService<TimeProvider>()
+        ));
         services.AddSingleton<PlaywrightBrowserHost>();
+        services.AddSingleton<BrowserCheck>();
         services.AddSingleton<IListingProvider, NepremicnineProvider>();
+        if (
+            configuration
+                .GetSection(DomolovOptions.SectionName)
+                .GetValue<bool>(nameof(DomolovOptions.FakeProvider))
+        )
+        {
+            services.AddSingleton<IListingProvider, FixtureListingProvider>();
+        }
+
         services.AddSingleton<IListingProviderResolver, ListingProviderResolver>();
 
         services.AddHttpClient<DiscordNotifier>();
@@ -49,114 +111,31 @@ public static class DependencyInjection
         services.AddTransient<INotifier, EmailNotifier>();
         services.AddTransient<INotifier, WebPushNotifier>();
 
-        services.AddHostedService<ScanSchedulerWorker>();
+        if (ReadRole(configuration) is DomolovRole.All or DomolovRole.Worker)
+        {
+            services.AddHostedService<ScanSchedulerService>();
+            services.AddHostedService<ScanQueueService>();
+            services.AddHostedService<CleanupService>();
+        }
 
         return services;
     }
 
-    private static void BindEnvOverrides(IServiceCollection services, IConfiguration configuration)
+    private static bool IsValidTimeZone(string id) =>
+        TimeZoneInfo.TryFindSystemTimeZoneById(id, out _);
+
+    /// <summary>
+    /// Npgsql probes for Kerberos (GSS) encryption on every connection and logs an error when
+    /// libgssapi is absent, as in the slim images. Disable the probe unless explicitly configured.
+    /// </summary>
+    private static string WithoutGssProbe(string connectionString)
     {
-        services.PostConfigure<DomolovOptions>(o =>
+        var builder = new NpgsqlConnectionStringBuilder(connectionString);
+        if (!connectionString.Contains("GSS", StringComparison.OrdinalIgnoreCase))
         {
-            o.AdminPassword =
-                configuration["DOMOLOV_ADMIN_PASSWORD"]
-                ?? configuration["Domolov:AdminPassword"]
-                ?? o.AdminPassword;
-            o.TimeZone =
-                configuration["DOMOLOV_TIMEZONE"]
-                ?? configuration["Domolov:TimeZone"]
-                ?? o.TimeZone;
-            if (
-                int.TryParse(
-                    configuration["DOMOLOV_MAX_CONCURRENT_SCANS"]
-                        ?? configuration["Domolov:MaxConcurrentScans"],
-                    out var max
-                )
-            )
-            {
-                o.MaxConcurrentScans = max;
-            }
+            builder.GssEncryptionMode = GssEncryptionMode.Disable;
+        }
 
-            if (
-                int.TryParse(
-                    configuration["DOMOLOV_SCAN_COOLDOWN_MS"]
-                        ?? configuration["Domolov:ScanCooldownMs"],
-                    out var cooldown
-                )
-            )
-            {
-                o.ScanCooldownMs = Math.Max(0, cooldown);
-            }
-
-            if (
-                int.TryParse(
-                    configuration["DOMOLOV_CLOUDFLARE_CHALLENGE_WAIT_MS"]
-                        ?? configuration["Domolov:CloudflareChallengeWaitMs"],
-                    out var challengeWait
-                )
-            )
-            {
-                o.CloudflareChallengeWaitMs = Math.Max(0, challengeWait);
-            }
-
-            if (
-                bool.TryParse(
-                    configuration["DOMOLOV_BROWSER_HEADLESS"]
-                        ?? configuration["Domolov:BrowserHeadless"],
-                    out var headless
-                )
-            )
-            {
-                o.BrowserHeadless = headless;
-            }
-
-            o.BrowserUserDataDir =
-                configuration["DOMOLOV_BROWSER_USER_DATA_DIR"]
-                ?? configuration["Domolov:BrowserUserDataDir"]
-                ?? o.BrowserUserDataDir;
-            o.Role = configuration["DOMOLOV_ROLE"] ?? configuration["Domolov:Role"] ?? o.Role;
-            o.TelegramBotToken =
-                configuration["DOMOLOV_TELEGRAM_BOT_TOKEN"]
-                ?? configuration["Domolov:TelegramBotToken"]
-                ?? o.TelegramBotToken;
-            o.SmtpHost =
-                configuration["DOMOLOV_SMTP_HOST"]
-                ?? configuration["Domolov:SmtpHost"]
-                ?? o.SmtpHost;
-            if (
-                int.TryParse(
-                    configuration["DOMOLOV_SMTP_PORT"] ?? configuration["Domolov:SmtpPort"],
-                    out var port
-                )
-            )
-            {
-                o.SmtpPort = port;
-            }
-
-            o.SmtpUser =
-                configuration["DOMOLOV_SMTP_USER"]
-                ?? configuration["Domolov:SmtpUser"]
-                ?? o.SmtpUser;
-            o.SmtpPassword =
-                configuration["DOMOLOV_SMTP_PASSWORD"]
-                ?? configuration["Domolov:SmtpPassword"]
-                ?? o.SmtpPassword;
-            o.SmtpFrom =
-                configuration["DOMOLOV_SMTP_FROM"]
-                ?? configuration["Domolov:SmtpFrom"]
-                ?? o.SmtpFrom;
-            o.VapidPublicKey =
-                configuration["DOMOLOV_VAPID_PUBLIC_KEY"]
-                ?? configuration["Domolov:VapidPublicKey"]
-                ?? o.VapidPublicKey;
-            o.VapidPrivateKey =
-                configuration["DOMOLOV_VAPID_PRIVATE_KEY"]
-                ?? configuration["Domolov:VapidPrivateKey"]
-                ?? o.VapidPrivateKey;
-            o.VapidSubject =
-                configuration["DOMOLOV_VAPID_SUBJECT"]
-                ?? configuration["Domolov:VapidSubject"]
-                ?? o.VapidSubject;
-        });
+        return builder.ConnectionString;
     }
 }

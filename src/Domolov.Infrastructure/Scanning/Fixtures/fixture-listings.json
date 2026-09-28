@@ -1,0 +1,180 @@
+{
+  "listings": [
+    {
+      "id": "6411001",
+      "photo": "p01",
+      "title": "LJUBLJANA, BEŽIGRAD, BRINJE",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Svetlo 3-sobno stanovanje v mirni soseski, 72,4 m2, 4/6 nad., zgrajeno l. 1978, prenovljeno. Južni balkon, klet, dvigalo, lastno parkirno mesto.",
+      "price": 329000
+    },
+    {
+      "id": "6411002",
+      "photo": "p02",
+      "title": "LJUBLJANA, CENTER, TRNOVO",
+      "category": "Prodaja: Stanovanje, 2-sobno",
+      "description": "Očarljivo 2-sobno stanovanje ob Gradaščici, 54,8 m2, 2/3 nad., zgrajeno l. 1932. Visoki stropi, parket, pogled na zelenje.",
+      "price": 298000
+    },
+    {
+      "id": "6411003",
+      "photo": "p03",
+      "title": "LJUBLJANA, ŠIŠKA, KOSEZE",
+      "category": "Prodaja: Stanovanje, 2,5-sobno",
+      "description": "Funkcionalno 2,5-sobno stanovanje blizu Koseškega bajerja, 63,1 m2, 3/5 nad., zgrajeno l. 1985. Zastekljen balkon, shramba, klet.",
+      "price": 279000,
+      "priceByRound": { "2": 264000 }
+    },
+    {
+      "id": "6411004",
+      "photo": "p04",
+      "title": "LJUBLJANA, VIČ, ROŽNA DOLINA",
+      "category": "Prodaja: Stanovanje, 4-sobno",
+      "description": "Prostorno 4-sobno stanovanje z dvema kopalnicama, 104,6 m2, 1/4 nad., zgrajeno l. 2006. Velika terasa, garažno mesto, shramba.",
+      "price": 489000
+    },
+    {
+      "id": "6411005",
+      "photo": "p05",
+      "title": "LJUBLJANA, MOSTE, SELO",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Prenovljeno 3-sobno stanovanje z novo kuhinjo in kopalnico, 68,2 m2, 5/8 nad., zgrajeno l. 1974. Balkon z razgledom, dvigalo, klet.",
+      "price": 285000,
+      "untilRound": 1
+    },
+    {
+      "id": "6411006",
+      "photo": "p06",
+      "title": "LJUBLJANA, ČRNUČE",
+      "category": "Prodaja: Hiša, 5-sobna",
+      "description": "Samostojna 5-sobna hiša s 540 m2 zemljišča, bivalna površina 186,0 m2, zgrajena l. 1996. Urejen vrt, dvojna garaža, toplotna črpalka.",
+      "price": 645000
+    },
+    {
+      "id": "6411007",
+      "photo": "p07",
+      "title": "LJUBLJANA, BEŽIGRAD, ŽAPUŽE",
+      "category": "Prodaja: Stanovanje, 1-sobno",
+      "description": "Kompaktno 1-sobno stanovanje, idealno za mlade ali naložbo, 34,5 m2, 6/7 nad., zgrajeno l. 1980. Balkon, dvigalo, bližina fakultet.",
+      "price": 179000,
+      "priceByRound": { "2": 183000 }
+    },
+    {
+      "id": "6411008",
+      "photo": "p08",
+      "title": "LJUBLJANA, CENTER, PRULE",
+      "category": "Prodaja: Stanovanje, 3,5-sobno",
+      "description": "Elegantno 3,5-sobno stanovanje v meščanski vili, 96,3 m2, 1/2 nad., zgrajeno l. 1928, celovito obnovljeno. Vrt, kamin, klet.",
+      "price": 612000
+    },
+    {
+      "id": "6411009",
+      "photo": "p09",
+      "title": "LJUBLJANA, ŠIŠKA, DRAVLJE",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Sodobno 3-sobno stanovanje v novogradnji, 77,9 m2, 2/4 nad., zgrajeno l. 2021. Talno ogrevanje, prezračevanje z rekuperacijo, parkirno mesto v garaži.",
+      "price": 419000
+    },
+    {
+      "id": "6411010",
+      "photo": "p10",
+      "title": "LJUBLJANA, VIČ, BROD",
+      "category": "Prodaja: Stanovanje, 2-sobno",
+      "description": "Mirno 2-sobno stanovanje ob robu gozda, 58,6 m2, 3/3 nad., zgrajeno l. 1990. Mansarda, balkon, pogled na Rožnik.",
+      "price": 262000
+    },
+    {
+      "id": "6411011",
+      "photo": "p11",
+      "title": "LJUBLJANA, RUDNIK",
+      "category": "Prodaja: Stanovanje, 4-sobno",
+      "description": "Družinsko 4-sobno stanovanje z vrtom, 98,2 m2, 1/3 nad., zgrajeno l. 2012. Dve parkirni mesti, shramba, bližina šole in vrtca.",
+      "price": 455000
+    },
+    {
+      "id": "6411012",
+      "photo": "p12",
+      "title": "DOMŽALE, CENTER",
+      "category": "Prodaja: Stanovanje, 2-sobno",
+      "description": "Lepo vzdrževano 2-sobno stanovanje v centru Domžal, 51,7 m2, 2/5 nad., zgrajeno l. 1983. Balkon, klet, takoj vseljivo.",
+      "price": 199000
+    },
+    {
+      "id": "6411013",
+      "photo": "p13",
+      "title": "KAMNIK, ŠUTNA",
+      "category": "Prodaja: Hiša, 4-sobna",
+      "description": "Vrstna 4-sobna hiša na mirni lokaciji, 320 m2 zemljišča, bivalna površina 142,5 m2, zgrajena l. 2003. Pogled na Kamniške Alpe.",
+      "price": 419000
+    },
+    {
+      "id": "6411014",
+      "photo": "p14",
+      "title": "LJUBLJANA, POLJE",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Novejše 3-sobno stanovanje s pogledom na Ljubljanico, 81,4 m2, 3/4 nad., zgrajeno l. 2016. Loggia, garaža, klimatska naprava.",
+      "price": 372000
+    },
+    {
+      "id": "6411015",
+      "photo": "p15",
+      "title": "LJUBLJANA, CENTER, TABOR",
+      "category": "Prodaja: Stanovanje, garsonjera",
+      "description": "Svetla garsonjera v bližini Metelkove, 28,9 m2, 4/5 nad., zgrajeno l. 1960. Obnovljena kopalnica, odlično za oddajanje.",
+      "price": 159000
+    },
+    {
+      "id": "6411016",
+      "photo": "p16",
+      "title": "MEDVODE, PRESKA",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Udobno 3-sobno stanovanje v manjšem bloku, 74,8 m2, 1/2 nad., zgrajeno l. 1999. Atrij, garaža, bližina železniške postaje.",
+      "price": 255000
+    },
+    {
+      "id": "6411017",
+      "photo": "p17",
+      "title": "LJUBLJANA, BEŽIGRAD, SAVSKO NASELJE",
+      "category": "Prodaja: Stanovanje, 2-sobno",
+      "description": "Novo na trgu: 2-sobno stanovanje po celoviti prenovi, 49,3 m2, 7/10 nad., zgrajeno l. 1968. Panoramski razgled, dvigalo.",
+      "price": 247000,
+      "fromRound": 2
+    },
+    {
+      "id": "6411018",
+      "photo": "p18",
+      "title": "LJUBLJANA, ŠENTVID",
+      "category": "Prodaja: Hiša, 6-sobna",
+      "description": "Velika 6-sobna hiša za večgeneracijsko bivanje, 680 m2 zemljišča, bivalna površina 238,0 m2, zgrajena l. 1988. Dve etaži, vrt, delavnica.",
+      "price": 720000,
+      "fromRound": 2
+    },
+    {
+      "id": "6412109",
+      "photo": "p09",
+      "title": "LJUBLJANA, ŠIŠKA, DRAVLJE",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Agencija ponuja 3-sobno stanovanje v novogradnji v Dravljah, 77,9 m2, 2/4 nad., zgrajeno l. 2021. Talno ogrevanje, rekuperacija, garažno mesto.",
+      "price": 409000,
+      "fromRound": 2
+    },
+    {
+      "id": "6412111",
+      "photo": null,
+      "title": "LJUBLJANA, RUDNIK",
+      "category": "Prodaja: Stanovanje, 4-sobno",
+      "description": "Prodamo 4-sobno pritlično stanovanje z lastnim vrtom na Rudniku, 98,2 m2, 1/3 nad., zgrajeno l. 2012. Primerno za družino, vrtec v neposredni bližini.",
+      "price": 449000,
+      "fromRound": 2
+    },
+    {
+      "id": "6412105",
+      "photo": "p05",
+      "title": "LJUBLJANA, MOSTE, SELO",
+      "category": "Prodaja: Stanovanje, 3-sobno",
+      "description": "Ponovno v prodaji: prenovljeno 3-sobno stanovanje z novo kuhinjo, 68,2 m2, 5/8 nad., zgrajeno l. 1974. Balkon, dvigalo, klet. Hitra vselitev.",
+      "price": 269000,
+      "fromRound": 4
+    }
+  ]
+}

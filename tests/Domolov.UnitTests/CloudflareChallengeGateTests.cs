@@ -1,5 +1,4 @@
 using Domolov.Domain.Providers;
-using Domolov.Domain.Services;
 using FluentAssertions;
 
 namespace Domolov.UnitTests;

@@ -1,6 +1,7 @@
 using Cronos;
+using Domolov.Domain.Common;
 
-namespace Domolov.Domain.Services;
+namespace Domolov.Domain.Watches;
 
 /// <summary>Supported guided schedule modes that map to <c>Watch.Cron</c>.</summary>
 public enum WatchCronMode
@@ -88,6 +89,23 @@ public static class WatchCronSchedule
         }
 
         return new WatchCronModel { Mode = WatchCronMode.Custom, CustomCron = trimmed };
+    }
+
+    /// <summary>Trims and validates a cron expression; blank means every 6 hours.</summary>
+    public static string Normalize(string? cron)
+    {
+        var value = string.IsNullOrWhiteSpace(cron) ? Every6HoursCron : cron.Trim();
+        if (!TryValidate(value, out var error))
+        {
+            throw new DomainRuleException(
+                "cron",
+                string.IsNullOrWhiteSpace(error)
+                    ? "Invalid cron expression."
+                    : $"Invalid cron expression: {error}"
+            );
+        }
+
+        return value;
     }
 
     public static bool TryValidate(string cron, out string? error)

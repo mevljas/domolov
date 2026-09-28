@@ -11,8 +11,7 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="Testcontainers.PostgreSql" />
@@ -26,6 +25,5 @@
     <ProjectReference Include="..\..\src\Domolov.Infrastructure\Domolov.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Domolov.Application\Domolov.Application.csproj" />
     <ProjectReference Include="..\..\src\Domolov.Domain\Domolov.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Domolov\Domolov.csproj" />
   </ItemGroup>
 </Project>

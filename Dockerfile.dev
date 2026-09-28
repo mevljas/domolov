@@ -1,41 +1,50 @@
 # syntax=docker/dockerfile:1
 
-# Dev image: headed Chromium under Xvfb. Use via docker-compose.dev.yml.
+# Dev worker image: headed Chromium under Xvfb (e.g. to debug Cloudflare behavior).
+# Use via docker-compose.dev.yml; the api and web services keep their prod images.
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG TARGETARCH
 WORKDIR /src
-COPY Directory.Build.props Directory.Packages.props global.json ./
+COPY Directory.Build.props Directory.Packages.props global.json .editorconfig ./
 COPY src/Domolov.Domain/Domolov.Domain.csproj src/Domolov.Domain/
 COPY src/Domolov.Application/Domolov.Application.csproj src/Domolov.Application/
 COPY src/Domolov.Infrastructure/Domolov.Infrastructure.csproj src/Domolov.Infrastructure/
-COPY src/Domolov/Domolov.csproj src/Domolov/
+COPY src/Domolov.Api/Domolov.Api.csproj src/Domolov.Api/
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore src/Domolov/Domolov.csproj -a $TARGETARCH
+    dotnet restore src/Domolov.Api/Domolov.Api.csproj -a $TARGETARCH
 COPY src/ src/
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish src/Domolov/Domolov.csproj -c Release -a $TARGETARCH --self-contained false \
-    --no-restore -o /app/publish /p:UseAppHost=false \
+    dotnet publish src/Domolov.Api/Domolov.Api.csproj -c Release -a $TARGETARCH --self-contained false \
+    --no-restore -o /app/publish /p:UseAppHost=false /p:OpenApiGenerateDocuments=false \
     && rm -rf /app/publish/BuildHost-*
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+# Stage name matches the Dockerfile target so the Compose overlay can keep `target: worker`.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS worker
 WORKDIR /app
 
 ENV ASPNETCORE_URLS=http://+:8080 \
+    DOMOLOV_ROLE=worker \
     DOMOLOV_BROWSER_HEADLESS=false \
     DOMOLOV_BROWSER_USER_DATA_DIR=/data/browser-profile \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 COPY --from=build /app/publish .
 COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck
+# Xvfb runs as the app user, so pre-create its socket dir with the sticky world-writable mode.
 RUN apt-get update \
     && ./.playwright/node/*/node ./.playwright/package/cli.js install --with-deps --no-shell chromium \
-    && apt-get install -y --no-install-recommends xvfb \
-    && rm -rf /var/lib/apt/lists/* \
-    && sed -i 's/\r$//' /entrypoint.sh \
-    && chmod +x /entrypoint.sh \
-    && mkdir -p /data/browser-profile /app/logs
+    && apt-get install -y --no-install-recommends xvfb fonts-liberation fonts-noto-color-emoji \
+    && rm -rf /var/lib/apt/lists/* /ms-playwright/ffmpeg-* \
+    && chmod -R a+rX /ms-playwright \
+    && sed -i 's/\r$//' /entrypoint.sh /usr/local/bin/healthcheck \
+    && chmod 755 /entrypoint.sh /usr/local/bin/healthcheck \
+    && mkdir -p /data/browser-profile /tmp/.X11-unix \
+    && chmod 1777 /tmp/.X11-unix \
+    && chown $APP_UID:$APP_UID /data/browser-profile
 
+USER $APP_UID
 VOLUME ["/data/browser-profile"]
 EXPOSE 8080
 ENTRYPOINT ["/entrypoint.sh"]

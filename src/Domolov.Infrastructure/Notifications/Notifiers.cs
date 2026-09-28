@@ -1,10 +1,13 @@
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using Domolov.Application.Abstractions;
-using Domolov.Domain.Enums;
+using Domolov.Application.Options;
+using Domolov.Domain.Notifications;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using WebPush;
@@ -195,6 +198,11 @@ public sealed class EmailNotifier(IOptions<DomolovOptions> options, ILogger<Emai
             body.AppendLine(message.Url);
         }
 
+        if (!string.IsNullOrWhiteSpace(message.AppUrl))
+        {
+            body.Append("Open in Domolov: ").AppendLine(message.AppUrl);
+        }
+
         NotificationContent.AppendMetadataLines(body, message);
 
         using var mail = new MailMessage(o.SmtpFrom, message.Destination)
@@ -244,13 +252,20 @@ public sealed class WebPushNotifier(
             {
                 title = message.Title,
                 body = NotificationContent.BuildPushBody(message),
-                url = message.Url,
+                url = message.AppPath ?? message.Url ?? "/",
+                image = message.ImageUrl,
             }
         );
 
         // Destination "all" sends to every stored subscription; otherwise match endpoint fragment.
-        var subscriptions = db.PushSubscriptions.AsEnumerable().ToList();
-        if (!string.Equals(message.Destination, "all", StringComparison.OrdinalIgnoreCase))
+        var subscriptions = await db.WebPushSubscriptions.ToListAsync(cancellationToken);
+        if (
+            !string.Equals(
+                message.Destination,
+                NotificationDestination.AllPushSubscriptions,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             subscriptions = subscriptions
                 .Where(s =>
@@ -259,18 +274,32 @@ public sealed class WebPushNotifier(
                 .ToList();
         }
 
+        var gone = new List<Guid>();
         foreach (var sub in subscriptions)
         {
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 var push = new PushSubscription(sub.Endpoint, sub.P256dh, sub.Auth);
-                await client.SendNotificationAsync(push, payload, vapid);
+                await client.SendNotificationAsync(push, payload, vapid, cancellationToken);
             }
-            catch (Exception ex)
+            catch (WebPushException ex)
+                when (ex.StatusCode is HttpStatusCode.Gone or HttpStatusCode.NotFound)
+            {
+                logger.LogInformation("Removing expired push subscription {Id}", sub.Id);
+                gone.Add(sub.Id);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogWarning(ex, "Web push failed for {Endpoint}", sub.Endpoint);
             }
+        }
+
+        if (gone.Count > 0)
+        {
+            await db
+                .WebPushSubscriptions.Where(s => gone.Contains(s.Id))
+                .ExecuteDeleteAsync(cancellationToken);
         }
     }
 }

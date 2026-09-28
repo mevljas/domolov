@@ -59,9 +59,18 @@ public sealed class CSharpierFormatTests
 
         using var process = Process.Start(start);
         process.Should().NotBeNull();
-        var stdout = process!.StandardOutput.ReadToEnd();
-        var stderr = process.StandardError.ReadToEnd();
-        process.WaitForExit(120_000);
-        return (process.ExitCode, stdout + stderr);
+        // Drain both pipes concurrently; reading them one after the other deadlocks once the
+        // unread pipe's buffer fills up.
+        var stdout = process!.StandardOutput.ReadToEndAsync();
+        var stderr = process.StandardError.ReadToEndAsync();
+        if (!process.WaitForExit(300_000))
+        {
+            process.Kill(entireProcessTree: true);
+        }
+
+        return (
+            process.ExitCode,
+            stdout.GetAwaiter().GetResult() + stderr.GetAwaiter().GetResult()
+        );
     }
 }

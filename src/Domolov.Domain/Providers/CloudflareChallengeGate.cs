@@ -1,6 +1,6 @@
-using Domolov.Domain.Providers;
+using Domolov.Domain.Providers.Nepremicnine;
 
-namespace Domolov.Domain.Services;
+namespace Domolov.Domain.Providers;
 
 /// <summary>
 /// Waits for a CloudflareChallenge to clear; throws on CloudflareBlock (timeout).

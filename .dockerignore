@@ -1,19 +1,21 @@
-**/.git
+# Allow-list: the root Dockerfile and Dockerfile.dev only need the backend sources.
+# frontend/ builds from its own context (frontend/.dockerignore).
+*
+!Directory.Build.props
+!Directory.Packages.props
+!global.json
+!.editorconfig
+!src/
+!docker/
+
+# Build output and local state that may sit inside src/.
 **/bin
 **/obj
+**/node_modules
+**/TestResults
 **/coverage
+**/*.user
+**/*.suo
 **/.vs
 **/.idea
-**/TestResults
-**/node_modules
-*.user
-*.suo
-.env
-tests/
-docs/
-deploy/
-.github/
-.cursor/
-**/*.md
-docker-compose*.yml
-Dockerfile*
+**/logs

@@ -1,3 +1,62 @@
+# Production-style stack: postgres -> migrate (one-shot) -> api + worker, web (SPA + proxy) on :8080.
+#   cp .env.example .env && docker compose up -d
+# Overlays: docker-compose.dev.yml (headed worker, host ports), docker-compose.smoke.yml (fake provider).
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+# Every backend container gets the same settings; DOMOLOV_ROLE is set per service.
+x-app-env: &app-env
+  ConnectionStrings__Default: Host=postgres;Port=5432;Database=domolov;Username=domolov;Password=${POSTGRES_PASSWORD:-domolov}
+  DOMOLOV_ADMIN_PASSWORD: ${DOMOLOV_ADMIN_PASSWORD:-changeme}
+  DOMOLOV_ADMIN_PASSWORD_HASH: ${DOMOLOV_ADMIN_PASSWORD_HASH:-}
+  DOMOLOV_TIMEZONE: ${DOMOLOV_TIMEZONE:-Europe/Ljubljana}
+  DOMOLOV_MAX_CONCURRENT_SCANS: ${DOMOLOV_MAX_CONCURRENT_SCANS:-1}
+  DOMOLOV_SCAN_COOLDOWN_MS: ${DOMOLOV_SCAN_COOLDOWN_MS:-20000}
+  DOMOLOV_CLOUDFLARE_CHALLENGE_WAIT_MS: ${DOMOLOV_CLOUDFLARE_CHALLENGE_WAIT_MS:-30000}
+  DOMOLOV_BROWSER_HEADLESS: ${DOMOLOV_BROWSER_HEADLESS:-true}
+  DOMOLOV_BROWSER_USER_DATA_DIR: /data/browser-profile
+  DOMOLOV_LOG_LEVEL: ${DOMOLOV_LOG_LEVEL:-Information}
+  DOMOLOV_LOG_FILE: ${DOMOLOV_LOG_FILE:-}
+  DOMOLOV_TELEGRAM_BOT_TOKEN: ${DOMOLOV_TELEGRAM_BOT_TOKEN:-}
+  DOMOLOV_SMTP_HOST: ${DOMOLOV_SMTP_HOST:-}
+  DOMOLOV_SMTP_PORT: ${DOMOLOV_SMTP_PORT:-587}
+  DOMOLOV_SMTP_USER: ${DOMOLOV_SMTP_USER:-}
+  DOMOLOV_SMTP_PASSWORD: ${DOMOLOV_SMTP_PASSWORD:-}
+  DOMOLOV_SMTP_FROM: ${DOMOLOV_SMTP_FROM:-}
+  DOMOLOV_VAPID_PUBLIC_KEY: ${DOMOLOV_VAPID_PUBLIC_KEY:-}
+  DOMOLOV_VAPID_PRIVATE_KEY: ${DOMOLOV_VAPID_PRIVATE_KEY:-}
+  DOMOLOV_VAPID_SUBJECT: ${DOMOLOV_VAPID_SUBJECT:-}
+  DOMOLOV_FAKE_PROVIDER: ${DOMOLOV_FAKE_PROVIDER:-false}
+  DOMOLOV_RETENTION_DELISTED_DAYS: ${DOMOLOV_RETENTION_DELISTED_DAYS:-30}
+  DOMOLOV_RETENTION_ORPHAN_LISTING_DAYS: ${DOMOLOV_RETENTION_ORPHAN_LISTING_DAYS:-30}
+  DOMOLOV_RETENTION_SCAN_RUN_DAYS: ${DOMOLOV_RETENTION_SCAN_RUN_DAYS:-90}
+  DOMOLOV_RETENTION_SCAN_RUN_KEEP_PER_WATCH: ${DOMOLOV_RETENTION_SCAN_RUN_KEEP_PER_WATCH:-20}
+  DOMOLOV_RETENTION_ARTIFACT_DAYS: ${DOMOLOV_RETENTION_ARTIFACT_DAYS:-14}
+  DOMOLOV_RETENTION_SESSION_DAYS: ${DOMOLOV_RETENTION_SESSION_DAYS:-30}
+  DOMOLOV_MATCH_AUTO_LINK_SCORE: ${DOMOLOV_MATCH_AUTO_LINK_SCORE:-0.85}
+  DOMOLOV_MATCH_POSSIBLE_SCORE: ${DOMOLOV_MATCH_POSSIBLE_SCORE:-0.6}
+  DOMOLOV_RETENTION_DAILY_AT: ${DOMOLOV_RETENTION_DAILY_AT:-04:00}
+  DOMOLOV_PUBLIC_URL: ${DOMOLOV_PUBLIC_URL:-}
+  DOMOLOV_SESSION_LIFETIME_DAYS: ${DOMOLOV_SESSION_LIFETIME_DAYS:-14}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+
+x-api-build: &api-build
+  context: .
+  dockerfile: Dockerfile
+  target: api
+
+# aspnet images have no curl/wget; docker/healthcheck.sh speaks HTTP over bash /dev/tcp.
+x-app-healthcheck: &app-healthcheck
+  test: ["CMD", "healthcheck", "/health/ready"]
+  interval: 15s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,53 +66,87 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-domolov}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U domolov -d domolov"]
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+    logging: *logging
 
-  domolov:
-    image: ghcr.io/mevljas/domolov:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+  # Applies EF Core migrations, then exits 0. Re-runs on every `up`; a no-op when current.
+  migrate:
+    image: ghcr.io/mevljas/domolov-api:latest
+    build: *api-build
+    command: ["migrate"]
+    environment:
+      <<: *app-env
+      DOMOLOV_ROLE: api
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "8080:8080"
+    restart: "no"
+    logging: *logging
+
+  api:
+    image: ghcr.io/mevljas/domolov-api:latest
+    build: *api-build
     environment:
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=domolov;Username=domolov;Password=${POSTGRES_PASSWORD:-domolov}
-      DOMOLOV_ADMIN_PASSWORD: ${DOMOLOV_ADMIN_PASSWORD:-changeme}
-      DOMOLOV_TIMEZONE: ${DOMOLOV_TIMEZONE:-Europe/Ljubljana}
-      DOMOLOV_MAX_CONCURRENT_SCANS: ${DOMOLOV_MAX_CONCURRENT_SCANS:-1}
-      DOMOLOV_SCAN_COOLDOWN_MS: ${DOMOLOV_SCAN_COOLDOWN_MS:-20000}
-      DOMOLOV_BROWSER_HEADLESS: ${DOMOLOV_BROWSER_HEADLESS:-true}
-      DOMOLOV_BROWSER_USER_DATA_DIR: /data/browser-profile
-      DOMOLOV_DATA_PROTECTION_KEYS_DIR: /data/data-protection-keys
-      DOMOLOV_LOG_LEVEL: ${DOMOLOV_LOG_LEVEL:-Information}
-      DOMOLOV_ROLE: ${DOMOLOV_ROLE:-all}
-      DOMOLOV_TELEGRAM_BOT_TOKEN: ${DOMOLOV_TELEGRAM_BOT_TOKEN:-}
-      DOMOLOV_SMTP_HOST: ${DOMOLOV_SMTP_HOST:-}
-      DOMOLOV_SMTP_PORT: ${DOMOLOV_SMTP_PORT:-587}
-      DOMOLOV_SMTP_USER: ${DOMOLOV_SMTP_USER:-}
-      DOMOLOV_SMTP_PASSWORD: ${DOMOLOV_SMTP_PASSWORD:-}
-      DOMOLOV_SMTP_FROM: ${DOMOLOV_SMTP_FROM:-}
-      DOMOLOV_VAPID_PUBLIC_KEY: ${DOMOLOV_VAPID_PUBLIC_KEY:-}
-      DOMOLOV_VAPID_PRIVATE_KEY: ${DOMOLOV_VAPID_PRIVATE_KEY:-}
-      DOMOLOV_VAPID_SUBJECT: ${DOMOLOV_VAPID_SUBJECT:-}
-      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      <<: *app-env
+      DOMOLOV_ROLE: api
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck: *app-healthcheck
+    restart: unless-stopped
+    logging: *logging
+
+  worker:
+    image: ghcr.io/mevljas/domolov-worker:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    environment:
+      <<: *app-env
+      DOMOLOV_ROLE: worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # Chromium needs far more than Docker's 64 MB /dev/shm default.
+    shm_size: 1gb
     volumes:
       - browser-profile:/data/browser-profile
-      - data-protection-keys:/data/data-protection-keys
-      - logs:/app/logs
+    healthcheck:
+      <<: *app-healthcheck
+      interval: 30s
+      start_period: 60s
     restart: unless-stopped
+    logging: *logging
+
+  web:
+    image: ghcr.io/mevljas/domolov-web:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      DOMOLOV_API_UPSTREAM: ${DOMOLOV_API_UPSTREAM:-http://api:8080}
+    ports:
+      - "8080:8080"
+    depends_on:
+      # nginx resolves the upstream once at startup; restart it whenever api is recreated
+      # so it never proxies to a stale container IP.
+      api:
+        condition: service_started
+        restart: true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/nginx-health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging: *logging
 
 volumes:
   pgdata:
   browser-profile:
-  data-protection-keys:
-  logs:

@@ -1,0 +1,27 @@
+# Non-secret settings shared by api and worker. DOMOLOV_ROLE is set per Deployment.
+# Variable reference: .env.example at the repo root.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: domolov-config
+data:
+  DOMOLOV_TIMEZONE: Europe/Ljubljana
+  DOMOLOV_MAX_CONCURRENT_SCANS: "1"
+  DOMOLOV_SCAN_COOLDOWN_MS: "20000"
+  DOMOLOV_CLOUDFLARE_CHALLENGE_WAIT_MS: "30000"
+  DOMOLOV_BROWSER_HEADLESS: "true"
+  DOMOLOV_LOG_LEVEL: Information
+  DOMOLOV_FAKE_PROVIDER: "false"
+  DOMOLOV_RETENTION_DELISTED_DAYS: "30"
+  DOMOLOV_RETENTION_ORPHAN_LISTING_DAYS: "30"
+  DOMOLOV_RETENTION_SCAN_RUN_DAYS: "90"
+  DOMOLOV_RETENTION_SCAN_RUN_KEEP_PER_WATCH: "20"
+  DOMOLOV_RETENTION_ARTIFACT_DAYS: "14"
+  DOMOLOV_RETENTION_SESSION_DAYS: "30"
+  DOMOLOV_MATCH_AUTO_LINK_SCORE: "0.85"
+  DOMOLOV_MATCH_POSSIBLE_SCORE: "0.6"
+  DOMOLOV_RETENTION_DAILY_AT: "04:00"
+  DOMOLOV_SESSION_LIFETIME_DAYS: "14"
+  # Public URL of the web app, used for "Open in Domolov" links in notifications.
+  DOMOLOV_PUBLIC_URL: "https://domolov.example.com"
+  # OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability:4317

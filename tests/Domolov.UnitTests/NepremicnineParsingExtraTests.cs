@@ -1,4 +1,5 @@
-using Domolov.Domain.Services;
+using Domolov.Domain.Providers.Nepremicnine;
+using Domolov.Domain.Watches;
 using FluentAssertions;
 
 namespace Domolov.UnitTests;

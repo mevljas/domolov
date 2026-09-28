@@ -6,13 +6,25 @@ on:
     tags: ["v*"]
   pull_request:
     branches: [main]
+  # Manual runs only regenerate the docs screenshots (see the screenshots job).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same PR cancels its superseded run; main and tag runs queue instead.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: mevljas/domolov
+  IMAGE_PREFIX: ghcr.io/mevljas/domolov
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+  SMOKE_COMPOSE: docker compose -f docker-compose.yml -f docker-compose.smoke.yml
 
 jobs:
-  test:
+  backend:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,25 +76,152 @@ jobs:
           if pct < 80:
               sys.exit(1)
           PY
+      # The build regenerates frontend/openapi/domolov.json; a diff means it was not committed.
+      # --intent-to-add makes a new, never-committed document show up in the diff too.
+      - name: OpenAPI drift check
+        run: |
+          git add --intent-to-add frontend/openapi
+          git diff --exit-code -- frontend/openapi \
+            || { echo "::error::frontend/openapi is stale. Build the backend and commit the regenerated document."; exit 1; }
+
+  frontend:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      # Shared with the smoke and screenshots jobs via YAML anchors.
+      - &setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+      - &enable-pnpm
+        name: Enable pnpm (corepack)
+        working-directory: frontend
+        run: |
+          corepack enable
+          echo "PNPM_STORE=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+      - &cache-pnpm
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_STORE }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - &pnpm-install
+        name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Format check
+        run: pnpm format:check
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: API types drift check
+        run: |
+          pnpm gen:api
+          git add --intent-to-add src/api/schema.d.ts
+          git diff --exit-code -- src/api/schema.d.ts \
+            || { echo "::error::src/api/schema.d.ts is stale. Run 'pnpm gen:api' and commit it."; exit 1; }
+      - name: Unit tests with coverage
+        run: pnpm test:coverage
+      - name: Build
+        run: pnpm build
+      - &install-playwright
+        name: Install Playwright Chromium
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: E2E tests
+        run: pnpm e2e
+      - &upload-playwright-report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.job }}
+          path: frontend/playwright-report
+          retention-days: 14
+          if-no-files-found: ignore
+
+  smoke:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - &setup-buildx
+        uses: docker/setup-buildx-action@v3
+      # Builds the Compose images with the same GHA cache scopes the docker job pushes from.
+      - &build-stack
+        name: Build images
+        uses: docker/bake-action@v6
+        with:
+          source: .
+          files: docker-compose.yml
+          targets: api,worker,web
+          load: true
+          set: |
+            api.cache-from=type=gha,scope=api
+            api.cache-to=type=gha,scope=api,mode=max
+            worker.cache-from=type=gha,scope=worker
+            worker.cache-to=type=gha,scope=worker,mode=max
+            web.cache-from=type=gha,scope=web
+            web.cache-to=type=gha,scope=web,mode=max
+      - &start-stack
+        name: Start smoke stack
+        run: $SMOKE_COMPOSE up -d --no-build --wait --wait-timeout 300
+      - &check-ready
+        name: Check readiness through the web proxy
+        run: curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors http://localhost:8080/health/ready
+      - *setup-node
+      - *enable-pnpm
+      - *cache-pnpm
+      - *pnpm-install
+      - *install-playwright
+      - name: Smoke tests
+        working-directory: frontend
+        env:
+          SMOKE_BASE_URL: http://localhost:8080
+          SMOKE_PASSWORD: smoke-password
+        run: pnpm e2e:smoke
+      - *upload-playwright-report
+      - &dump-logs
+        name: Compose logs
+        if: failure()
+        run: |
+          $SMOKE_COMPOSE ps -a
+          $SMOKE_COMPOSE logs --no-color --timestamps
+      - &stop-stack
+        name: Stop smoke stack
+        if: always()
+        run: $SMOKE_COMPOSE down -v
 
   docker:
-    needs: test
+    needs: [backend, frontend, smoke]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: api, context: ., file: Dockerfile, target: api }
+          - { name: worker, context: ., file: Dockerfile, target: worker }
+          - { name: web, context: ./frontend, file: frontend/Dockerfile, target: "" }
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.name }}
           tags: |
             type=sha
             type=ref,event=branch
@@ -90,7 +229,39 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+  screenshots:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - *setup-buildx
+      - *build-stack
+      - *start-stack
+      - *check-ready
+      - *setup-node
+      - *enable-pnpm
+      - *cache-pnpm
+      - *pnpm-install
+      - *install-playwright
+      - name: Capture screenshots
+        working-directory: frontend
+        env:
+          SMOKE_BASE_URL: http://localhost:8080
+          SMOKE_PASSWORD: smoke-password
+        run: pnpm docs:screenshots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs-screenshots
+          path: docs/assets/screenshots
+          if-no-files-found: error
+      - *dump-logs
+      - *stop-stack

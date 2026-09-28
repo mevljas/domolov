@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="t"><title id="t">Domolov</title>
+  <rect width="64" height="64" rx="15" fill="#1F4D3A"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.5 29.5V47.5a4 4 0 0 0 4 4H41.5a4 4 0 0 0 4-4V29.5" stroke="#F7F5F0" stroke-width="4.5"/>
+    <path d="M12 31.5 32 12.5l20 19" stroke="#F7F5F0" stroke-width="5.5"/>
+    <circle cx="32" cy="37.5" r="6.75" stroke="#E08A66" stroke-width="3.5"/>
+    <path d="M32 27.25v2M32 45.75v2M22.75 37.5h1.75M39.5 37.5h1.75" stroke="#E08A66" stroke-width="3"/>
+  </g>
+  <circle cx="32" cy="37.5" r="2.25" fill="#E08A66"/>
+</svg>

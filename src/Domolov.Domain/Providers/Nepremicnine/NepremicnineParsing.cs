@@ -1,8 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Cronos;
 
-namespace Domolov.Domain.Services;
+namespace Domolov.Domain.Providers.Nepremicnine;
 
 /// <summary>Helpers for Nepremicnine URLs and Cloudflare HTML sniffing.</summary>
 public static partial class NepremicnineParsing
@@ -255,37 +254,4 @@ public static class CrawlPagination
 
     public static int NextEmptyStreak(int foundOnPage, int consecutiveEmptyPages) =>
         foundOnPage == 0 ? consecutiveEmptyPages + 1 : 0;
-}
-
-/// <summary>Cron evaluation in a configured IANA timezone.</summary>
-public static class WatchSchedule
-{
-    public static DateTimeOffset? GetNextOccurrence(
-        string cronExpression,
-        DateTimeOffset fromUtc,
-        TimeZoneInfo timeZone
-    )
-    {
-        var cron = CronExpression.Parse(cronExpression);
-        var from = DateTime.SpecifyKind(fromUtc.UtcDateTime, DateTimeKind.Utc);
-        var next = cron.GetNextOccurrence(from, timeZone);
-        if (next is null)
-        {
-            return null;
-        }
-
-        return new DateTimeOffset(next.Value, TimeSpan.Zero);
-    }
-
-    public static bool IsDue(
-        string cronExpression,
-        DateTimeOffset? lastScannedAt,
-        DateTimeOffset nowUtc,
-        TimeZoneInfo timeZone
-    )
-    {
-        var from = lastScannedAt ?? nowUtc.AddYears(-1);
-        var next = GetNextOccurrence(cronExpression, from, timeZone);
-        return next is not null && next <= nowUtc.ToUniversalTime();
-    }
 }
